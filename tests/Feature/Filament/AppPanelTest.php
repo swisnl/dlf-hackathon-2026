@@ -24,7 +24,9 @@ class AppPanelTest extends TestCase
     {
         $this->actingAs(User::factory()->create(['role' => $role]));
 
-        $this->get('/')->assertOk();
+        $this->get('/')
+            ->assertOk()
+            ->assertSee($role->getLabel());
     }
 
     /**
