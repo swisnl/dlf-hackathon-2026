@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
+        "claude-bridge": "node bin/claude-bridge.mjs",
         "dev": "vite"
     },
     "devDependencies": {

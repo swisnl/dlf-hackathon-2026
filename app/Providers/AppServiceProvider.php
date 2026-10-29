@@ -2,12 +2,16 @@
 
 namespace App\Providers;
 
+use App\Ai\ClaudeCode\ClaudeCodeProvider;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Ai\AiManager;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        // Runs prompts through Claude Code on the developer's Mac, see bin/claude-bridge.mjs.
+        $this->callAfterResolving(AiManager::class, function (AiManager $ai): void {
+            $ai->extend('claude-code', fn (Application $app, array $config): ClaudeCodeProvider => new ClaudeCodeProvider($config, $app->make(Dispatcher::class)));
+        });
     }
 
     /**

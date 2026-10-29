@@ -6,12 +6,12 @@ return [
     | Default AI Provider Names
     |--------------------------------------------------------------------------
     |
-    | All text generation runs through our LiteLLM proxy, which exposes an
-    | OpenAI-compatible API in front of the actual models.
+    | Text generation runs through Claude Code on the developer's Mac, via the
+    | Claude bridge (bin/claude-bridge.mjs). Tests fake the agents instead.
     |
     */
 
-    'default' => 'litellm',
+    'default' => 'claude-code',
 
     /*
     |--------------------------------------------------------------------------
@@ -34,13 +34,13 @@ return [
     */
 
     'providers' => [
-        'litellm' => [
-            'driver' => 'openai-compatible',
-            'url' => env('LITELLM_URL'),
-            'key' => env('LITELLM_API_KEY'),
+        'claude-code' => [
+            'driver' => 'claude-code',
+            'url' => env('CLAUDE_BRIDGE_URL', 'http://host.docker.internal:8765'),
+            'key' => env('CLAUDE_BRIDGE_TOKEN'),
             'models' => [
                 'text' => [
-                    'default' => env('LITELLM_MODEL'),
+                    'default' => env('CLAUDE_CODE_MODEL', 'sonnet'),
                 ],
             ],
         ],

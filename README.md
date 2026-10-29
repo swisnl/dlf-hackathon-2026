@@ -1,3 +1,39 @@
+# DLF hackathon 2026
+
+## AI lokaal via Claude Code
+
+De AI in de app (oefeningen maken, antwoorden beoordelen, doorpraten) draait via de Claude Code CLI op je Mac,
+met het account waarmee je daar in `claude` bent ingelogd. Er is geen API-key nodig.
+
+PHP draait in de swis-dev-container, waar geen `claude` is. Daarom draait er op de Mac een kleine bridge
+(`bin/claude-bridge.mjs`) die de app aanroept via `http://host.docker.internal:8765`. De bridge:
+
+- luistert alleen op `127.0.0.1` (Docker Desktop zet verkeer naar `host.docker.internal` daar neer);
+- accepteert alleen verzoeken met het gedeelde token uit `CLAUDE_BRIDGE_TOKEN`;
+- draait `claude --print --output-format json --no-session-persistence` zonder tools, MCP-servers of settings,
+  in een lege tijdelijke map. Structured output (generator en beoordeling) gaat via `--json-schema`.
+
+Eenmalig instellen in `.env`:
+
+```dotenv
+CLAUDE_BRIDGE_URL=http://host.docker.internal:8765
+CLAUDE_BRIDGE_PORT=8765
+CLAUDE_BRIDGE_TOKEN=   # bijvoorbeeld: openssl rand -hex 32
+CLAUDE_CODE_MODEL=sonnet
+```
+
+Starten, **op de Mac** (niet via `swis-dev`), in de root van het project en laat het venster open:
+
+```bash
+npm run claude-bridge
+```
+
+Je moet in Claude Code zijn ingelogd (`claude` en dan `/login`). Draait de bridge niet, dan krijgt de student een
+foutmelding en staat er in de log `The Claude bridge ... is not reachable`. Controleren kan met
+`curl http://127.0.0.1:8765/health`.
+
+De tests roepen nooit echte AI aan: de agents worden gefaket (`Agent::fake()`) en `Http::preventStrayRequests()` staat aan.
+
 <p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
 <p align="center">
