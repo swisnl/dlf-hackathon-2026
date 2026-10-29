@@ -160,7 +160,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
                         <Link href="/badges" class="text-[15px] font-semibold text-purple-700 hover:text-purple-800">Bekijk</Link>
                     </div>
                     <div class="flex justify-between gap-2.5">
-                        <BadgeMedal v-for="badge in badges" :key="badge.id" :badge="badge" class="size-[52px]" />
+                        <BadgeMedal v-for="badge in badges" :key="badge.id" :badge="badge" class="size-[52px] border-4" />
                     </div>
                 </div>
 

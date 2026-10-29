@@ -3,6 +3,8 @@ import { computed } from 'vue'
 
 const props = defineProps({
     badge: { type: Object, required: true },
+    // Show a lock instead of the badge's own (greyed out) icon while it is not earned.
+    lock: { type: Boolean, default: true },
 })
 
 // Badges store a Lucide icon name; these are the paths for the icons the seeded badges use.
@@ -14,9 +16,9 @@ const icons = {
     'lucide-crown': ['M3 8l4 4 5-7 5 7 4-4-2 11H5z'],
     'lucide-award': ['M6 9a6 6 0 1 0 12 0a6 6 0 1 0-12 0', 'M8.5 14l-1.5 7 5-3 5 3-1.5-7'],
 }
-const lock = ['M7 11h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z', 'M8 11V8a4 4 0 0 1 8 0v3']
+const lockIcon = ['M7 11h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2z', 'M8 11V8a4 4 0 0 1 8 0v3']
 
-const paths = computed(() => (props.badge.earned ? icons[props.badge.icon] ?? icons['lucide-award'] : lock))
+const paths = computed(() => (!props.badge.earned && props.lock ? lockIcon : icons[props.badge.icon] ?? icons['lucide-award']))
 const style = computed(() => (props.badge.earned
     ? { backgroundColor: `color-mix(in srgb, ${props.badge.color} 20%, white)`, borderColor: props.badge.color }
     : {}))
@@ -24,7 +26,7 @@ const style = computed(() => (props.badge.earned
 
 <template>
     <div
-        class="flex items-center justify-center rounded-full border-4"
+        class="flex items-center justify-center rounded-full"
         :class="badge.earned ? 'border-solid' : 'border-dashed border-[#B9B2C4] bg-[#F1EEEA]'"
         :style="style"
         :title="badge.name"
