@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
 import Owl from '@/Components/Owl.vue'
 import StarIcon from '@/Components/StarIcon.vue'
+import Wijsje from '@/Components/Wijsje.vue'
 
 defineProps({
     title: { type: String, required: true },
@@ -74,8 +75,10 @@ const onProfile = computed(() => isActive('/profile'))
         </div>
     </header>
 
-    <main class="mx-auto flex max-w-7xl flex-col gap-7 px-4 pt-10 pb-16 sm:px-6">
+    <main class="mx-auto flex max-w-7xl flex-col gap-7 px-4 pt-10 pb-28 sm:px-6">
         <div v-if="page.props.flash?.error" class="rounded-[14px] bg-missed-light px-4 py-3 text-[15px] text-missed-text" role="alert">{{ page.props.flash.error }}</div>
         <slot />
     </main>
+
+    <Wijsje />
 </template>
