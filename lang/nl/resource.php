@@ -16,6 +16,38 @@ return [
         'plural' => 'Pogingen',
         'singular' => 'Poging',
     ],
+    'exercise' => [
+        'actions' => [
+            'close' => 'Sluiten',
+            'preview' => 'Voorbeeld',
+        ],
+        'fields' => [
+            'attempts_count' => 'Pogingen',
+            'correct_code' => 'Goede class',
+            'error_title' => 'Titel van de fout',
+            'errors' => 'Fouten',
+            'explanation' => 'Uitleg',
+            'hint' => 'Hint',
+            'line' => 'Regel',
+            'published' => 'Gepubliceerd',
+            'stars' => 'Sterren',
+            'title' => 'Titel',
+            'topic' => 'Onderwerp',
+            'wrong_code' => 'Foute class',
+        ],
+        'helpers' => [
+            'line' => 'Regelnummer in de foute class.',
+            'published' => 'Uit = concept, studenten zien de oefening dan nog niet.',
+        ],
+        'plural' => 'Oefeningen',
+        'singular' => 'Oefening',
+        'warnings' => [
+            'attempted' => [
+                'description' => 'Studenten hebben deze oefening al gemaakt. Als je de code of de fouten wijzigt, kloppen hun eerdere pogingen mogelijk niet meer.',
+                'heading' => 'Deze oefening is al gemaakt',
+            ],
+        ],
+    ],
     'fields' => [
         'created_at' => 'Aangemaakt op',
         'deleted_at' => 'Verwijderd op',
