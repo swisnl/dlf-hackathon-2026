@@ -16,6 +16,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -29,7 +30,9 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -60,6 +63,12 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(false),
             ])
             ->profile(EditProfile::class, false)
+            ->renderHook(
+                PanelsRenderHook::USER_MENU_BEFORE,
+                static fn (): ?View => ($user = Filament::auth()->user()) instanceof User
+                    ? view('filament.user-role-badge', ['role' => $user->role])
+                    : null,
+            )
             ->colors([
                 'primary' => Color::Purple,
                 'secondary' => Color::Neutral,

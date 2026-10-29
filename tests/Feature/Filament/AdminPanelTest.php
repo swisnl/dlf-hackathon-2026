@@ -27,7 +27,9 @@ class AdminPanelTest extends TestCase
     {
         $this->actingAs(User::factory()->create(['role' => $role]));
 
-        $this->get('/admin')->assertOk();
+        $this->get('/admin')
+            ->assertOk()
+            ->assertSee($role->getLabel());
     }
 
     /**
