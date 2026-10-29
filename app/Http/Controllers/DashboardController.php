@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProgressStatus;
+use App\Http\Resources\StudentExerciseResource;
 use App\Models\Badge;
 use App\Models\Exercise;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,14 +27,15 @@ class DashboardController extends Controller
 
         $exercises = Exercise::query()
             ->published()
-            ->with(['topic', 'progress' => fn (HasMany $query) => $query->whereBelongsTo($user)])
+            ->withProgressOf($user)
+            ->with('topic')
             ->orderBy('published_at')
             ->orderBy('id')
             ->get();
 
-        $withStatus = fn (ProgressStatus $status) => $exercises->filter(fn (Exercise $exercise): bool => $this->status($exercise) === $status);
+        $withStatus = fn (ProgressStatus $status) => $exercises->filter(fn (Exercise $exercise): bool => $exercise->statusOfStudent() === $status);
         // The most recently attempted retry first.
-        $retries = $withStatus(ProgressStatus::Retry)->sortByDesc(fn (Exercise $exercise) => $exercise->progress->first()?->updated_at);
+        $retries = $withStatus(ProgressStatus::Retry)->sortByDesc(fn (Exercise $exercise) => $exercise->progressOfStudent()?->updated_at);
         $new = $withStatus(ProgressStatus::New);
 
         return Inertia::render('Dashboard', [
@@ -45,22 +46,8 @@ class DashboardController extends Controller
             'nextBadge' => $badges->first(fn (Badge $badge): bool => $badge->threshold > $user->stars)?->only('name', 'threshold'),
             'exercisesDone' => $withStatus(ProgressStatus::Done)->count(),
             'exercisesTotal' => $exercises->count(),
-            'suggestions' => $retries->concat($new)->take(self::SUGGESTIONS)->values()->map(fn (Exercise $exercise): array => [
-                ...$exercise->only('id', 'title', 'stars'),
-                'bestStars' => $exercise->progress->first()->best_stars ?? 0,
-                'status' => $this->status($exercise)->value,
-                'statusLabel' => $this->status($exercise)->getLabel(),
-                'topic' => $exercise->topic?->only('name', 'color', 'text_color'),
-            ]),
+            'suggestions' => StudentExerciseResource::collection($retries->concat($new)->take(self::SUGGESTIONS)->values())->resolve(),
             'nextExerciseId' => $new->first()?->id,
         ]);
-    }
-
-    /**
-     * The student's status on an exercise; no progress yet means it is new.
-     */
-    private function status(Exercise $exercise): ProgressStatus
-    {
-        return $exercise->progress->first()->status ?? ProgressStatus::New;
     }
 }
