@@ -19,7 +19,8 @@ class TopicFactory extends Factory
     {
         return [
             'name' => ucfirst(fake()->unique()->word()),
-            'color' => fake()->randomElement(['primary', 'success', 'warning', 'danger', 'info', 'gray']),
+            'color' => fake()->hexColor(),
+            'text_color' => fake()->hexColor(),
         ];
     }
 }
