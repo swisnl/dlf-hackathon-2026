@@ -1,0 +1,250 @@
+options:
+  runtime:
+    cloud:
+      version: "3"
+
+definitions:
+  images:
+    php: &image-php
+      name: swisleiden/base-php-8.4-fpm:1-ci
+      username: $DOCKER_USERNAME
+      password: $DOCKER_PASSWORD
+      email: $DOCKER_EMAIL
+
+  caches:
+    composer:
+      key:
+        files:
+          - composer.json
+          - composer.lock
+      path: ~/.composer/cache
+    php-cs-fixer:
+      key:
+        files:
+          - .php-cs-fixer.dist.php
+          - composer.json
+          - composer.lock
+      path: ./.php-cs-fixer.cache
+    phpstan:
+      key:
+        files:
+          - phpstan.neon.dist
+          - composer.json
+          - composer.lock
+      path: ./.phpstan.cache
+
+  commands:
+    abort-if-newer-commits: &command-abort-if-newer-commits |
+      if [ "$BITBUCKET_COMMIT" != "$(git ls-remote origin "refs/heads/$BITBUCKET_BRANCH" | cut -f 1)" ]; then
+        echo "New commit detected on branch $BITBUCKET_BRANCH. Abort step."
+        exit 0
+      fi
+
+  services:
+    mysql:
+      image: mysql:8.0
+      variables:
+        MYSQL_ROOT_PASSWORD: 'root'
+        MYSQL_USER: 'db'
+        MYSQL_PASSWORD: 'db'
+        MYSQL_DATABASE: 'db'
+
+  steps:
+    security-check: &step-security-check
+      step:
+        name: Run security checks
+        image: *image-php
+        script:
+          - composer audit --locked --ansi
+
+    static-analysis: &step-static-analysis
+      step:
+        name: Static analysis
+        image: *image-php
+        caches:
+          - composer
+          - phpstan
+        script:
+          - composer config -g github-oauth.github.com $GITHUB_TOKEN
+          - composer install --no-interaction --no-progress --no-scripts
+          - vendor/bin/phpstan analyse --ansi --memory-limit=1G --error-format=bitbucket
+
+    codestyle-php: &step-codestyle-php
+      step:
+        name: Check PHP codestyle with PHP-CS-Fixer
+        image: *image-php
+        caches:
+          - composer
+          - php-cs-fixer
+        script:
+          - composer config -g github-oauth.github.com $GITHUB_TOKEN
+          - composer install --no-interaction --no-progress --no-scripts
+          - vendor/bin/php-cs-fixer check -v --format=gitlab | vendor/bin/phpcsf2bb
+
+    codestyle-php-fix: &step-codestyle-php-fix
+      step:
+        name: Fix codestyle PHP
+        image: *image-php
+        caches:
+          - composer
+          - php-cs-fixer
+        script:
+          - composer config -g github-oauth.github.com $GITHUB_TOKEN
+          - composer install --no-interaction --no-progress --no-scripts
+          - vendor/bin/php-cs-fixer fix -v
+          - |
+            if [ -n "$(git status --porcelain)" ]; then
+              git add .
+              git commit --no-verify -m "style: fix code style"
+              git push --no-verify origin "${BITBUCKET_BRANCH}"
+            else
+              echo "No codestyle changes to commit."
+            fi
+
+    test: &step-test
+      step:
+        name: Run tests with PHPUnit
+        image: *image-php
+        caches:
+          - composer
+        services:
+          - mysql
+        script:
+          - cp .env.example .env
+          - composer validate --strict
+          - composer config -g github-oauth.github.com $GITHUB_TOKEN
+          - composer install --no-interaction --no-progress -o
+          - php artisan key:generate
+          - mkdir -p pipelines/test-results
+          - vendor/bin/phpunit --colors=always --log-junit=pipelines/test-results/phpunit.xml
+        artifacts:
+          upload:
+            - name: Application logs
+              type: scoped
+              paths:
+                - storage/logs/**
+              capture-on: failed
+
+    build-images: &step-build-images
+      step:
+        name: Build - Images
+        image: docker:cli
+        services:
+          - docker
+        artifacts:
+          download: false
+        script:
+          - set -eu
+          - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+          - |
+            export IMAGE_NAME="$BITBUCKET_REPO_SLUG"
+            export IMAGE_REPO="$DOCKER_USERNAME/$IMAGE_NAME"
+            export IMAGE_SOURCE="$BITBUCKET_GIT_HTTP_ORIGIN"
+            export IMAGE_BRANCH="$(echo "$BITBUCKET_BRANCH" | tr '/' '-')"
+            export IMAGE_CREATED="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            export IMAGE_BUILDNO="$BITBUCKET_BUILD_NUMBER"
+            export IMAGE_REVISION="$BITBUCKET_COMMIT"
+            export IMAGE_COMMIT="$(echo "$IMAGE_REVISION" | cut -c1-7)"
+            export IMAGE_VERSION="$(date -u +"%Y%m%d-%H%M")-$IMAGE_BUILDNO-$IMAGE_COMMIT"
+            export IMAGE_BASE=$IMAGE_REPO:develop.latest
+            export IMAGE_HEAD=$IMAGE_REPO:$IMAGE_BRANCH.latest
+            export IMAGE_FULL="$IMAGE_REPO:$IMAGE_BRANCH.$IMAGE_VERSION"
+            env | grep ^IMAGE_
+          # Create a list of parameters required for build.
+          - |
+            set -- \
+              --build-arg "NAME=${IMAGE_NAME}" \
+              --build-arg "VERSION=${IMAGE_VERSION}" \
+              --build-arg "CREATED=${IMAGE_CREATED}" \
+              --build-arg "SOURCE=${IMAGE_SOURCE}" \
+              --build-arg "REVISION=${IMAGE_REVISION}" \
+            && echo "$@"
+          # Build and tag images.
+          - docker build --target=app "$@" -t "$IMAGE_FULL" .
+          - docker build --target=web "$@" -t "$IMAGE_FULL.web" .
+          # Push the full-tags (versioned).
+          - docker push "$IMAGE_FULL.web"
+          - docker push "$IMAGE_FULL"
+          # Only push head-tags (latest) when actually building the latest commit.
+          - *command-abort-if-newer-commits
+          - docker tag  "$IMAGE_FULL.web" "$IMAGE_HEAD.web"
+          - docker push                   "$IMAGE_HEAD.web"
+          - docker tag  "$IMAGE_FULL"     "$IMAGE_HEAD"
+          - docker push                   "$IMAGE_HEAD"
+
+    deploy-base: &step-deploy-base
+      name: Deploy
+      image: docker:cli
+      clone:
+        enabled: false
+      artifacts:
+        download: false
+      script:
+        - echo "$DOCKER_PASSWORD" | docker login --username "$DOCKER_USERNAME" --password-stdin
+        - pipe: docker://swisleiden/infra-update-pipe:1
+          variables:
+            CLIENT_KEY: $INFRA_PIPE_CLIENT_KEY
+            CLIENT_SECRET: $INFRA_PIPE_CLIENT_SECRET
+            IMAGE: $BITBUCKET_REPO_SLUG
+            BRANCH: $BITBUCKET_BRANCH
+
+    deploy: &step-deploy
+      step:
+        <<: *step-deploy-base
+        name: Deploy
+
+    deploy-acc: &step-deploy-acc
+      step:
+        <<: *step-deploy-base
+        name: Deploy - Acceptance
+        deployment: Test
+
+    deploy-prod: &step-deploy-prod
+      step:
+        <<: *step-deploy-base
+        name: Deploy - Production
+        deployment: Production
+
+triggers:
+  pullrequest-push:
+    - condition: glob(BITBUCKET_BRANCH, "shift-ci-*")
+      pipelines:
+        - fix-codestyle
+
+pipelines:
+  branches:
+    develop:
+      - parallel:
+          - <<: *step-security-check
+          - <<: *step-codestyle-php
+          - <<: *step-static-analysis
+          - <<: *step-test
+      - <<: *step-build-images
+      - <<: *step-deploy-acc
+
+    master:
+      - parallel:
+          - <<: *step-security-check
+          - <<: *step-codestyle-php
+          - <<: *step-static-analysis
+          - <<: *step-test
+      - <<: *step-build-images
+      - <<: *step-deploy-prod
+
+  pull-requests:
+    '**':
+      - parallel:
+          - <<: *step-security-check
+          - <<: *step-codestyle-php
+          - <<: *step-static-analysis
+          - <<: *step-test
+
+  custom:
+    build:
+      - <<: *step-build-images
+
+    deploy:
+      - <<: *step-deploy
+
+    fix-codestyle:
+      - <<: *step-codestyle-php-fix

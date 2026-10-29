@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      target: app
+    networks:
+      web:
+    user: "10001:0"
+    volumes:
+      - ./.env:/srv/.env
+      - ./storage/app:/srv/storage/app/
+    tmpfs:
+      - /srv/bootstrap/cache:uid=10001,gid=0
+      - /srv/storage/framework/cache:uid=10001,gid=0
+      - /tmp:uid=10001,gid=0
+
+  web:
+    build:
+      context: .
+      target: web
+    networks:
+      web:
+    ports:
+      - "8080:8080"
+    user: "10001:0"
+    tmpfs:
+      - /tmp:uid=10001,gid=0
+    depends_on:
+      - "app"
+
+  hitch:
+    image: "hitch:latest"
+    networks:
+      web:
+    ports:
+      - "8443:443"
+    command: --backend=[web]:8080 --alpn-protos=http/1.1 --write-proxy-v2=off
+    depends_on:
+      - "web"
+
+networks:
+  web:

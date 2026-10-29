@@ -1,0 +1,5 @@
+# Remove index.php.
+rewrite ^/index.php$ / permanent;
+rewrite ^/index.php/(.*) /$1 permanent;
+# Remove trailing slash.
+rewrite ^/(.*)/$ /$1 permanent;

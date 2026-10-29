@@ -1,0 +1,117 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "swisnl/dlf-hackathon-2026",
+    "type": "project",
+    "description": "This is my project dlf-hackathon-2026",
+    "keywords": [
+        "laravel",
+        "framework"
+    ],
+    "license": "proprietary",
+    "require": {
+        "php": "^8.4",
+        "bepsvpt/secure-headers": "^9.1",
+        "laravel/framework": "^13.17",
+        "laravel/tinker": "^3.0",
+        "namoshek/laravel-redis-sentinel": "^1.3"
+    },
+    "require-dev": {
+        "barryvdh/laravel-ide-helper": "^3.7",
+        "fakerphp/faker": "^1.23",
+        "friendsofphp/php-cs-fixer": "^3.95",
+        "fruitcake/laravel-debugbar": "^4.4",
+        "laravel/pao": "^1.0.6",
+        "larastan/larastan": "^3.10",
+        "mockery/mockery": "^1.6",
+        "nunomaduro/collision": "^8.6",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpunit/phpunit": "^12.5.12",
+        "pyrech/composer-changelogs": "^2.2",
+        "sentry/sentry-laravel": "^4.26",
+        "swisnl/laravel-sentry-extras": "^1.4",
+        "swisnl/php-cs-fixer-bitbucket": "^0.2",
+        "swisnl/php-cs-fixer-config": "^1.52",
+        "swisnl/phpstan-bitbucket": "^0.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Database\\Factories\\": "database/factories/",
+            "Database\\Seeders\\": "database/seeders/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "setup": [
+            "composer install",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate",
+            "@php artisan migrate --force",
+            "npm install --ignore-scripts",
+            "npm run build"
+        ],
+        "test": [
+            "@php artisan config:clear --ansi @no_additional_args",
+            "@php artisan test"
+        ],
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi",
+            "if [ \"$COMPOSER_DEV_MODE\" = \"1\" ] ; then php artisan ide-helper:generate --ansi ; fi",
+            "if [ \"$COMPOSER_DEV_MODE\" = \"1\" ] ; then php artisan ide-helper:meta --ansi ; fi"
+        ],
+        "post-update-cmd": [
+            "@publish-assets"
+        ],
+        "post-install-cmd": [
+            "@publish-assets"
+        ],
+        "post-root-package-install": [
+            "@php configure.php",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php artisan migrate --graceful --ansi",
+            "@fix-style"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "publish-assets": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
+        ],
+        "check-style": [
+            "vendor/bin/php-cs-fixer check -v"
+        ],
+        "fix-style": [
+            "vendor/bin/php-cs-fixer fix"
+        ],
+        "analyse": [
+            "vendor/bin/phpstan analyse --ansi"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "dont-discover": []
+        }
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "preferred-install": "dist",
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true,
+            "pyrech/composer-changelogs": true
+        },
+        "platform": {
+            "php": "8.4.7"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
