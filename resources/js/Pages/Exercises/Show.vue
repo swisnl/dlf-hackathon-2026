@@ -1,4 +1,5 @@
 <script setup>
+import { nextTick, ref } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import CodeBlock from '@/Components/CodeBlock.vue'
 import FieldError from '@/Components/FieldError.vue'
@@ -16,9 +17,14 @@ const props = defineProps({
 const answer = useForm({ choice: null, explanation: '' })
 const message = useForm({ content: '' })
 const next = useForm({})
+const result = ref(null)
 
 function submitAnswer() {
-    answer.post(`/exercises/${props.exercise.id}/answer`, { preserveScroll: true })
+    answer.post(`/exercises/${props.exercise.id}/answer`, {
+        preserveScroll: true,
+        // Move focus to the result, so keyboard and screen reader users land on the feedback.
+        onSuccess: () => nextTick(() => result.value?.focus()),
+    })
 }
 
 function submitMessage() {
@@ -61,10 +67,11 @@ function nextExercise() {
                             class="card block min-w-0 cursor-pointer overflow-hidden border-2 has-[:checked]:border-purple-600 has-[:checked]:ring-[3px] has-[:checked]:ring-purple-100 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-purple-100"
                         >
                             <span class="flex items-center gap-2.5 border-b border-line-light px-4 py-3.5">
-                                <input v-model="answer.choice" type="radio" name="choice" :value="variant.value" required class="size-[18px] accent-purple-600">
-                                <b class="font-display text-xl">{{ variant.label }}</b>
+                                <!-- Named by the variant label only; otherwise the whole code block becomes the radio's name. -->
+                                <input v-model="answer.choice" type="radio" name="choice" :value="variant.value" required :aria-labelledby="`variant-${variant.value}`" class="size-[18px] accent-purple-600">
+                                <b :id="`variant-${variant.value}`" class="font-display text-xl">{{ variant.label }}</b>
                             </span>
-                            <CodeBlock :code="variant.code" class="m-3" />
+                            <CodeBlock :code="variant.code" :label="`Code van ${variant.label}`" class="m-3" />
                         </label>
                     </div>
                     <FieldError :message="answer.errors.choice" class="mt-3" />
@@ -73,8 +80,17 @@ function nextExercise() {
                 <div class="card mt-5 flex flex-col gap-2 p-5 sm:p-6">
                     <label for="explanation" class="font-display text-xl font-extrabold">Leg uit waarom jouw keuze juist is</label>
                     <p class="text-ink-muted">Dit is het belangrijkste deel: laat zien dat je snapt wat er gebeurt.</p>
-                    <textarea id="explanation" v-model="answer.explanation" rows="5" required minlength="10" class="field mt-1" />
-                    <FieldError :message="answer.errors.explanation" />
+                    <textarea
+                        id="explanation"
+                        v-model="answer.explanation"
+                        rows="5"
+                        required
+                        minlength="10"
+                        :aria-invalid="answer.errors.explanation ? 'true' : undefined"
+                        :aria-describedby="answer.errors.explanation ? 'explanation-error' : undefined"
+                        class="field mt-1"
+                    />
+                    <FieldError id="explanation-error" :message="answer.errors.explanation" />
                     <div class="mt-2">
                         <button type="submit" class="btn-primary" :disabled="answer.processing">{{ answer.processing ? 'De AI bekijkt je antwoord…' : 'Inleveren' }}</button>
                     </div>
@@ -87,16 +103,17 @@ function nextExercise() {
                         <div class="flex flex-wrap items-center gap-2 border-b border-line-light px-4 py-3.5">
                             <b class="font-display text-xl">{{ variant.label }}</b>
                             <span v-if="variant.correct" class="chip bg-found-light text-[#075E5A]"><span aria-hidden="true">✓</span> Juist</span>
+                            <span v-else class="chip bg-missed-light text-missed-text"><span aria-hidden="true">×</span> Bevat een fout</span>
                             <span v-if="variant.value === attempt.chosen" class="chip bg-purple-100 text-purple-800">Jouw keuze</span>
                         </div>
-                        <CodeBlock :code="variant.code" class="m-3" />
+                        <CodeBlock :code="variant.code" :label="`Code van ${variant.label}`" class="m-3" />
                     </section>
                 </div>
 
                 <section class="card mt-5 flex flex-col gap-5 p-5 sm:p-7">
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                        <h2 class="font-display text-[28px] font-extrabold">{{ attempt.correct ? 'Scherp gezien!' : 'Bijna! De andere versie klopt.' }}</h2>
-                        <span :class="['chip', attempt.stars > 0 ? 'bg-found-light text-[#075E5A]' : 'bg-missed-light text-missed-text']" title="Een inschatting van de AI"><span aria-hidden="true">{{ attempt.stars > 0 ? '✓' : '×' }}</span> {{ attempt.stars }} van {{ exercise.stars }} sterren</span>
+                        <h2 ref="result" tabindex="-1" class="font-display text-[28px] font-extrabold">{{ attempt.correct ? 'Scherp gezien!' : 'Bijna! De andere versie klopt.' }}</h2>
+                        <span :class="['chip', attempt.stars > 0 ? 'bg-found-light text-[#075E5A]' : 'bg-missed-light text-missed-text']" title="Een inschatting van de AI"><span aria-hidden="true">{{ attempt.stars > 0 ? '✓' : '×' }}</span> {{ attempt.stars }} van {{ exercise.stars }} sterren<span class="sr-only">, een inschatting van de AI</span></span>
                     </div>
                     <div>
                         <h3 class="text-sm font-semibold text-ink-muted">Jouw uitleg</h3>
@@ -120,18 +137,20 @@ function nextExercise() {
                 <section id="gesprek" class="card mt-5 p-5 sm:p-7">
                     <h2 class="font-display text-2xl font-extrabold">Praat erover door</h2>
                     <p class="text-ink-muted">Reageer op de feedback of stel een vraag over deze oefening.</p>
-                    <div class="mt-5 flex flex-col gap-3">
+                    <!-- A log region, so screen readers announce new replies; who speaks is not only shown by colour and side. -->
+                    <div role="log" aria-label="Gesprek" class="mt-5 flex flex-col gap-3">
                         <template v-for="chat in attempt.messages" :key="chat.id">
                             <div v-if="chat.role === 'student'" class="flex justify-end">
-                                <p class="max-w-[85%] rounded-2xl rounded-br-md bg-purple-600 px-4 py-2.5 whitespace-pre-line text-white">{{ chat.content }}</p>
+                                <p class="max-w-[85%] rounded-2xl rounded-br-md bg-purple-600 px-4 py-2.5 whitespace-pre-line text-white"><span class="sr-only">Jij: </span>{{ chat.content }}</p>
                             </div>
                             <div v-else class="flex items-end gap-2.5">
                                 <Owl class="size-8 shrink-0" />
-                                <p class="max-w-[85%] rounded-2xl rounded-bl-md bg-paper px-4 py-2.5 whitespace-pre-line"><InlineCode :text="chat.content" /></p>
+                                <p class="max-w-[85%] rounded-2xl rounded-bl-md bg-paper px-4 py-2.5 whitespace-pre-line"><span class="sr-only">AI: </span><InlineCode :text="chat.content" /></p>
                             </div>
                         </template>
-                        <div v-if="message.processing" class="flex justify-end">
-                            <p class="max-w-[85%] rounded-2xl rounded-br-md bg-purple-600/70 px-4 py-2.5 whitespace-pre-line text-white">{{ message.content }}</p>
+                        <div v-if="message.processing" class="flex flex-col items-end gap-1">
+                            <p class="max-w-[85%] rounded-2xl rounded-br-md bg-purple-600 px-4 py-2.5 whitespace-pre-line text-white"><span class="sr-only">Jij: </span>{{ message.content }}</p>
+                            <span class="text-sm text-ink-muted">Versturen…</span>
                         </div>
                     </div>
                     <form class="mt-5 flex flex-col gap-3" :aria-busy="message.processing" @submit.prevent="submitMessage">
