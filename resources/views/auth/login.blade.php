@@ -1,21 +1,19 @@
-<x-layout title="Inloggen">
-    <div class="mx-auto max-w-sm">
-        <h1 class="mb-6 text-2xl font-semibold">Inloggen</h1>
-        <form method="POST" action="{{ url('login') }}" class="space-y-4 rounded-xl border border-stone-200 bg-white p-6">
-            @csrf
-            <div>
-                <label for="email" class="block text-sm font-medium">E-mailadres</label>
-                <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2">
-                <x-field-error name="email" />
-            </div>
-            <div>
-                <label for="password" class="block text-sm font-medium">Wachtwoord</label>
-                <input id="password" name="password" type="password" required autocomplete="current-password" class="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2">
-                <x-field-error name="password" />
-            </div>
-            <label class="flex items-center gap-2 text-sm"><input type="checkbox" name="remember" value="1"> Ingelogd blijven</label>
-            <button type="submit" class="w-full rounded-lg bg-stone-900 px-4 py-2 font-medium text-white hover:bg-stone-700">Inloggen</button>
-        </form>
-        <p class="mt-4 text-center text-sm text-stone-600">Nog geen account? <a href="{{ route('register') }}" class="underline">Maak er een</a>.</p>
-    </div>
-</x-layout>
+<x-auth-layout title="Inloggen" active="login">
+    <h2 class="font-display text-[34px] font-extrabold">Welkom terug</h2>
+    <form method="POST" action="{{ url('login') }}" class="flex flex-col gap-5">
+        @csrf
+        <div class="flex flex-col gap-2">
+            <label for="email" class="label">E-mailadres</label>
+            <input id="email" name="email" type="email" value="{{ old('email') }}" required autofocus autocomplete="username" class="field">
+            <x-field-error name="email" />
+        </div>
+        <div class="flex flex-col gap-2">
+            <label for="password" class="label">Wachtwoord</label>
+            <input id="password" name="password" type="password" required autocomplete="current-password" class="field">
+            <x-field-error name="password" />
+        </div>
+        <label class="flex items-center gap-2.5 text-[15px]"><input type="checkbox" name="remember" value="1" class="size-[18px] accent-paars"> Ingelogd blijven</label>
+        <button type="submit" class="btn-primary w-full text-[17px]">Inloggen</button>
+    </form>
+    <p class="text-center text-[15px] text-inkt-zacht">Nog geen account? <a href="{{ route('register') }}" class="link">Maak er een aan</a></p>
+</x-auth-layout>

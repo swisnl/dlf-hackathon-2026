@@ -62,7 +62,7 @@ class ExerciseTest extends TestCase
 
         $this->actingAs($exercise->user)->get(route('exercises.show', $exercise))
             ->assertOk()
-            ->assertSee('Goed gekozen!')
+            ->assertSee('Scherp gezien!')
             ->assertSee('Sterke uitleg!')
             ->assertSee($exercise->reference_explanation)
             ->assertSee('Praat erover door');
@@ -100,6 +100,9 @@ class ExerciseTest extends TestCase
         ]);
 
         $this->assertFalse($exercise->refresh()->is_correct);
+
+        $this->actingAs($exercise->user)->get(route('exercises.show', $exercise))
+            ->assertSee('Bijna! De andere versie klopt.');
     }
 
     public function test_the_score_is_clamped_between_0_and_10(): void

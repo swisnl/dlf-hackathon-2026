@@ -1,31 +1,38 @@
+@props(['title' => null])
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ isset($title) ? $title.' · ' : '' }}{{ config('app.name') }}</title>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <x-head :title="$title" />
 </head>
-<body class="min-h-screen bg-stone-50 text-stone-900 antialiased">
-    <header class="border-b border-stone-200 bg-white">
-        <div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
-            <a href="{{ url('/') }}" class="font-semibold tracking-tight">Code-overhoring</a>
+<body class="min-h-screen bg-papier font-sans text-inkt antialiased">
+    <header class="border-b border-rand bg-white">
+        <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-3 px-4 sm:gap-x-7 py-3.5 sm:px-6">
+            <a href="{{ url('/') }}" class="flex items-center gap-2.5 text-inkt" aria-label="Eigenwijs, naar mijn code">
+                <x-owl :size="36" />
+                <span class="font-display text-xl font-extrabold tracking-tight sm:text-2xl">eigenwijs</span>
+            </a>
             @auth
-                <nav class="flex items-center gap-4 text-sm">
-                    <a href="{{ route('submissions.index') }}" class="text-stone-600 hover:text-stone-900">Mijn code</a>
-                    <span class="hidden text-stone-400 sm:inline">{{ auth()->user()?->name }}</span>
+                <nav aria-label="Hoofdmenu" class="flex gap-1">
+                    <a href="{{ route('submissions.index') }}" @class([
+                        'rounded-[10px] px-3.5 py-2.5',
+                        'bg-paars-licht font-bold text-paars-diep' => request()->routeIs('submissions.*', 'exercises.*'),
+                        'font-semibold text-inkt-zacht hover:text-inkt' => ! request()->routeIs('submissions.*', 'exercises.*'),
+                    ]) @if (request()->routeIs('submissions.*', 'exercises.*')) aria-current="page" @endif>Mijn code</a>
+                </nav>
+                <div class="ml-auto flex items-center gap-3">
+                    <span class="hidden size-11 items-center sm:flex justify-center rounded-full bg-inkt font-bold text-white" title="{{ auth()->user()?->name }}" aria-label="Ingelogd als {{ auth()->user()?->name }}">{{ Str::of(auth()->user()?->name ?? '')->explode(' ')->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('') }}</span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit" class="text-stone-600 hover:text-stone-900">Uitloggen</button>
+                        <button type="submit" class="font-semibold text-inkt-zacht underline-offset-4 hover:text-inkt hover:underline">Uitloggen</button>
                     </form>
-                </nav>
+                </div>
             @endauth
         </div>
     </header>
 
-    <main class="mx-auto max-w-5xl px-4 py-8">
+    <main class="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10">
         @if (session('error'))
-            <div class="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{{ session('error') }}</div>
+            <div class="mb-6 rounded-[14px] bg-gemist-licht px-4 py-3 text-[15px] text-[#8A4300]" role="alert">{{ session('error') }}</div>
         @endif
 
         {{ $slot }}
