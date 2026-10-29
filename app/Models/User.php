@@ -38,6 +38,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
      */
     protected $attributes = [
         'role' => UserRole::Student,
+        'stars' => 0,
     ];
 
     /**
