@@ -1,5 +1,5 @@
 <script setup>
-import { Head } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3'
 import Owl from '@/Components/Owl.vue'
 
 defineProps({
@@ -46,6 +46,8 @@ const benefits = [
         <main class="flex flex-1 items-center justify-center px-4 py-10 sm:px-6 lg:py-14">
             <div class="flex w-full max-w-[420px] flex-col gap-5">
                 <slot />
+
+                <Link href="/privacy" class="self-center text-sm text-ink-muted underline hover:text-ink">Privacyverklaring</Link>
             </div>
         </main>
     </div>
