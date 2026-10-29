@@ -19,7 +19,7 @@ class ExampleExerciseSeeder extends Seeder
             ['title' => 'Mass assignment in het Post-model'],
             [
                 'topic_id' => $topics['Eloquent'],
-                'stars' => 4,
+                'stars' => 3,
                 'correct_code' => <<<'PHP'
                     <?php
 
@@ -436,7 +436,7 @@ Route::patch(\'/comments/{comment}/approve\', CommentApprovalController::class)
             ['title' => 'N+1 in de PostController'],
             [
                 'topic_id' => $topics['Controllers'],
-                'stars' => 4,
+                'stars' => 3,
                 'correct_code' => <<<'PHP'
                     <?php
 
@@ -707,11 +707,7 @@ return $user->id === $post->user_id;
                 'line' => 17,
                 'title' => 'Concepten zijn van iedereen',
                 'hint' => 'Wie mag het concept van een ander bewerken?',
-                'explanation' => 'Door de || mag elke ingelogde user elk concept bewerken, ook dat van een ander. Of een post gepubliceerd is, zegt niets over wie hem mag aanpassen. Haal de voorwaarde weg.
-
-```php
-return $user->id === $post->user_id;
-```',
+                'explanation' => 'Door de || mag elke ingelogde user elk concept bewerken, ook dat van een ander. Of een post gepubliceerd is, zegt niets over wie hem mag aanpassen. Haal de voorwaarde weg. Er blijft dan alleen de controle op user_id over.',
             ],
         ]);
 
@@ -780,7 +776,7 @@ public function show(Post $post): View
                 'line' => 12,
                 'title' => 'Een controle die altijd slaagt',
                 'hint' => 'Kan een post die route model binding gevonden heeft niet bestaan?',
-                'explanation' => 'Een gebonden model komt uit de database, dus exists is altijd true. Vindt Laravel de slug niet, dan geeft de binding zelf al een 404. Wat je hier wel moet controleren, is of de post gepubliceerd is. Anders leest iedereen concepten en ingeplande posts via hun slug.
+                'explanation' => 'Bij een werkende binding komt het model uit de database, dus dan is exists altijd true. In deze code is exists juist altijd false, door het verkeerde argument. Vindt Laravel de slug niet, dan geeft de binding zelf al een 404. Wat je hier wel moet controleren, is of de post gepubliceerd is. Anders leest iedereen concepten en ingeplande posts via hun slug.
 
 ```php
 abort_if($post->published_at === null || $post->published_at->isFuture(), 404);
@@ -792,7 +788,7 @@ abort_if($post->published_at === null || $post->published_at->isFuture(), 404);
             ['title' => 'Posts en tags met een positie in de pivot'],
             [
                 'topic_id' => $topics['Relaties'],
-                'stars' => 4,
+                'stars' => 3,
                 'correct_code' => <<<'PHP'
                     <?php
 
@@ -897,7 +893,7 @@ return $this->belongsToMany(Tag::class)
             ['title' => 'Soft deletes voor posts'],
             [
                 'topic_id' => $topics['Migrations'],
-                'stars' => 5,
+                'stars' => 3,
                 'correct_code' => <<<'PHP'
                     <?php
 
