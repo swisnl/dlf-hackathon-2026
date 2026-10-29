@@ -6,7 +6,7 @@ import Owl from '@/Components/Owl.vue'
 <template>
     <Head title="Privacyverklaring" />
 
-    <div class="min-h-screen px-4 py-10 sm:px-6 lg:py-14">
+    <main class="min-h-screen px-4 py-10 sm:px-6 lg:py-14">
         <article class="mx-auto flex max-w-[680px] flex-col gap-8 text-[17px] leading-relaxed [&_h2]:font-display [&_h2]:text-2xl [&_h2]:font-extrabold [&_section]:flex [&_section]:flex-col [&_section]:gap-3">
             <Link href="/login" class="flex items-center gap-3 self-start">
                 <Owl class="size-10" />
@@ -56,5 +56,5 @@ import Owl from '@/Components/Owl.vue'
 
             <Link href="/login" class="self-start font-semibold text-purple-700 hover:text-purple-800">Terug naar inloggen</Link>
         </article>
-    </div>
+    </main>
 </template>

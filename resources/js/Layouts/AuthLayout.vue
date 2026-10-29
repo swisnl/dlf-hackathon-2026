@@ -17,7 +17,7 @@ const benefits = [
     <Head :title="title" />
 
     <div class="flex min-h-screen flex-col lg:flex-row">
-        <section class="flex flex-col justify-between gap-8 bg-purple-600 px-4 py-8 text-white sm:px-10 lg:w-1/2 lg:gap-12 lg:px-16 lg:py-14">
+        <header class="flex flex-col justify-between gap-8 bg-purple-600 px-4 py-8 text-white sm:px-10 lg:w-1/2 lg:gap-12 lg:px-16 lg:py-14">
             <div class="flex items-center gap-3">
                 <Owl variant="inverted" class="size-10" />
                 <span class="font-display text-3xl font-extrabold tracking-tight">eigenwijs</span>
@@ -41,7 +41,7 @@ const benefits = [
             </div>
 
             <Owl variant="bare" class="hidden size-[180px] self-end lg:block" />
-        </section>
+        </header>
 
         <main class="flex flex-1 items-center justify-center px-4 py-10 sm:px-6 lg:py-14">
             <div class="flex w-full max-w-[420px] flex-col gap-5">
