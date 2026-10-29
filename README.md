@@ -17,6 +17,7 @@ Eenmalig instellen in `.env`:
 
 ```dotenv
 CLAUDE_BRIDGE_URL=http://host.docker.internal:8765
+CLAUDE_BRIDGE_HOST=127.0.0.1
 CLAUDE_BRIDGE_PORT=8765
 CLAUDE_BRIDGE_TOKEN=   # bijvoorbeeld: openssl rand -hex 32
 CLAUDE_CODE_MODEL=sonnet
@@ -31,6 +32,27 @@ npm run claude-bridge
 Je moet in Claude Code zijn ingelogd (`claude` en dan `/login`). Draait de bridge niet, dan krijgt de student een
 foutmelding en staat er in de log `The Claude bridge ... is not reachable`. Controleren kan met
 `curl http://127.0.0.1:8765/health`.
+
+### WSL2 met DDEV
+
+Op WSL2 wijst `host.docker.internal` in de DDEV-container naar Windows, niet naar je WSL-distro, en een bridge
+op `127.0.0.1` is vanuit een container sowieso niet bereikbaar. Laat de bridge daarom luisteren op de gateway van
+het `ddev_default`-netwerk; alleen containers kunnen daarbij, niet de rest van je netwerk:
+
+```bash
+docker network inspect ddev_default --format '{{range .IPAM.Config}}{{.Gateway}}{{end}}'
+```
+
+Zet dat adres (meestal `172.18.0.1`) in `.env`, start de bridge in WSL (niet in de container) en wis daarna de
+config-cache in de container (`ddev artisan config:clear`):
+
+```dotenv
+CLAUDE_BRIDGE_HOST=172.18.0.1
+CLAUDE_BRIDGE_URL=http://172.18.0.1:8765
+```
+
+Controleren kan vanuit de container met `ddev exec curl http://172.18.0.1:8765/health`. DDEV moet draaien
+voordat je de bridge start, anders bestaat dat adres nog niet.
 
 De tests roepen nooit echte AI aan: de agents worden gefaket (`Agent::fake()`) en `Http::preventStrayRequests()` staat aan.
 

@@ -5,7 +5,9 @@
  *
  * Run it on the Mac, not in the container:  npm run claude-bridge
  *
- * It only listens on 127.0.0.1; Docker Desktop delivers traffic to host.docker.internal there.
+ * By default it only listens on 127.0.0.1; Docker Desktop delivers traffic to host.docker.internal there.
+ * On Linux/WSL2 (DDEV) that does not work: set CLAUDE_BRIDGE_HOST to the gateway of the Docker network
+ * instead, so only containers can reach it (see README).
  * Every request needs the shared token from CLAUDE_BRIDGE_TOKEN in .env. Claude runs without
  * tools, MCP servers, settings or session history, in an empty temporary directory.
  */
@@ -17,7 +19,6 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const HOST = '127.0.0.1';
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 const MAX_TIMEOUT_SECONDS = 600;
 const MAX_CONCURRENT = 4;
@@ -26,6 +27,7 @@ const KILL_GRACE_MS = 5000;
 
 const config = { ...readDotEnv(join(dirname(fileURLToPath(import.meta.url)), '..', '.env')), ...process.env };
 const token = config.CLAUDE_BRIDGE_TOKEN ?? '';
+const host = config.CLAUDE_BRIDGE_HOST || '127.0.0.1';
 const port = Number(config.CLAUDE_BRIDGE_PORT || 8765);
 const claudeBin = config.CLAUDE_BIN || 'claude';
 let running = 0;
@@ -79,8 +81,8 @@ createServer(async (req, res) => {
     } finally {
         running--;
     }
-}).listen(port, HOST, () => {
-    console.log(`Claude bridge luistert op http://${HOST}:${port} (bereikbaar vanuit de container via host.docker.internal:${port})`);
+}).listen(port, host, () => {
+    console.log(`Claude bridge luistert op http://${host}:${port}`);
 });
 
 function authorized(header) {
