@@ -8,18 +8,19 @@ use Illuminate\Database\Seeder;
 class TopicSeeder extends Seeder
 {
     /**
-     * The topics students practise with, each with its own colour.
+     * The seven topics with their chip colours from the design:
+     * name => [background, text].
      *
-     * @var array<string, string>
+     * @var array<string, array{string, string}>
      */
     private const TOPICS = [
-        'Eloquent' => 'primary',
-        'Relaties' => 'info',
-        'Controllers' => 'success',
-        'Routes' => 'warning',
-        'Validatie' => 'danger',
-        'Migrations' => 'gray',
-        'Policies' => 'primary',
+        'Eloquent' => ['#DBEAFE', '#1E40AF'],
+        'Relaties' => ['#CFFAFE', '#155E75'],
+        'Controllers' => ['#F1EEEA', '#4A4660'],
+        'Routes' => ['#FCE7F3', '#9D174D'],
+        'Validatie' => ['#DCFCE7', '#166534'],
+        'Migrations' => ['#FEF3C7', '#92400E'],
+        'Policies' => ['#E0E7FF', '#3730A3'],
     ];
 
     /**
@@ -27,10 +28,10 @@ class TopicSeeder extends Seeder
      */
     public function run(): void
     {
-        foreach (self::TOPICS as $name => $color) {
+        foreach (self::TOPICS as $name => [$color, $textColor]) {
             Topic::query()->updateOrCreate(
                 ['name' => $name],
-                ['color' => $color],
+                ['color' => $color, 'text_color' => $textColor],
             );
         }
     }

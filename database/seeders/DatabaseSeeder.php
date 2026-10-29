@@ -15,7 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(TopicSeeder::class);
+        $this->call([
+            TopicSeeder::class,
+            BadgeSeeder::class,
+            ExampleExerciseSeeder::class,
+        ]);
 
         User::factory()->admin()->create([
             'email' => 'admin@example.com',
