@@ -2,12 +2,11 @@
 
 namespace App\Providers;
 
-use App\Session\DatabaseSessionHandler;
-use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Database\DatabaseManager;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -40,5 +39,8 @@ class AppServiceProvider extends ServiceProvider
 
         Relation::enforceMorphMap([
         ]);
+
+        // Every AI call costs money and time, so limit how often a student can trigger one.
+        RateLimiter::for('ai', fn (Request $request) => Limit::perMinute(20)->by($request->user()?->getAuthIdentifier() ?? $request->ip()));
     }
 }

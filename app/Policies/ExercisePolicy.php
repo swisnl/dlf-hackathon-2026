@@ -2,58 +2,36 @@
 
 namespace App\Policies;
 
+use App\Models\Exercise;
 use App\Models\User;
+use Illuminate\Auth\Access\Response;
 
-/**
- * Teachers and admins create, change and publish exercises.
- */
-final class ExercisePolicy
+class ExercisePolicy
 {
-    /**
-     * Determine whether the user can view any models.
-     */
-    public function viewAny(User $user): bool
+    public function view(User $user, Exercise $exercise): bool
     {
-        return $user->role->hasPanelAccess();
+        return $exercise->user_id === $user->id;
     }
 
-    /**
-     * Determine whether the user can view the model.
-     */
-    public function view(User $user): bool
+    public function answer(User $user, Exercise $exercise): Response
     {
-        return $user->role->hasPanelAccess();
+        if (!$this->view($user, $exercise)) {
+            return Response::denyAsNotFound();
+        }
+
+        return $exercise->isAnswered()
+            ? Response::deny('Deze oefening heb je al beantwoord.')
+            : Response::allow();
     }
 
-    /**
-     * Determine whether the user can create models.
-     */
-    public function create(User $user): bool
+    public function discuss(User $user, Exercise $exercise): Response
     {
-        return $user->role->hasPanelAccess();
-    }
+        if (!$this->view($user, $exercise)) {
+            return Response::denyAsNotFound();
+        }
 
-    /**
-     * Determine whether the user can update the model.
-     */
-    public function update(User $user): bool
-    {
-        return $user->role->hasPanelAccess();
-    }
-
-    /**
-     * Determine whether the user can delete the model.
-     */
-    public function delete(User $user): bool
-    {
-        return $user->role->hasPanelAccess();
-    }
-
-    /**
-     * Determine whether the user can delete models in bulk.
-     */
-    public function deleteAny(User $user): bool
-    {
-        return $user->role->hasPanelAccess();
+        return $exercise->isAnswered()
+            ? Response::allow()
+            : Response::deny('Beantwoord eerst de oefening.');
     }
 }

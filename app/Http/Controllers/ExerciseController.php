@@ -2,47 +2,60 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ProgressStatus;
-use App\Http\Resources\StudentExerciseResource;
+use App\Enums\Variant;
 use App\Models\Exercise;
-use App\Models\Topic;
-use Illuminate\Database\Eloquent\Builder;
+use App\Models\Submission;
+use App\Services\ExerciseService;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
+use Throwable;
 
 class ExerciseController extends Controller
 {
-    public function index(Request $request): Response
+    public function store(Submission $submission, ExerciseService $exercises): RedirectResponse
     {
-        /** @var \App\Models\User $user */
-        $user = $request->user();
+        Gate::authorize('view', $submission);
 
-        $topic = $request->string('topic')->toString() ?: null;
-        $status = $request->enum('status', ProgressStatus::class);
+        try {
+            $exercise = $exercises->generate($submission);
+        } catch (Throwable $e) {
+            report($e);
 
-        $exercises = Exercise::query()
-            ->published()
-            ->withProgressOf($user)
-            ->with('topic')
-            ->when($topic, fn (Builder $query) => $query->whereRelation('topic', 'name', $topic))
-            ->orderBy('published_at')
-            ->orderBy('id')
-            ->get()
-            // The status comes from the student's progress, so it is filtered after loading.
-            ->when($status, fn ($exercises) => $exercises->filter(fn (Exercise $exercise): bool => $exercise->statusOfStudent() === $status));
+            return back()->with('error', 'De AI kon geen nieuwe vraag maken. Probeer het zo opnieuw.');
+        }
 
-        return Inertia::render('Exercises/Index', [
-            'topics' => Topic::query()->orderBy('id')->pluck('name'),
-            'statuses' => collect(ProgressStatus::cases())->map(fn (ProgressStatus $status): array => [
-                'value' => $status->value,
-                'label' => $status->getLabel(),
-            ]),
-            'filters' => [
-                'topic' => $topic,
-                'status' => $status?->value,
-            ],
-            'exercises' => StudentExerciseResource::collection($exercises->values())->resolve(),
+        return redirect()->route('exercises.show', $exercise);
+    }
+
+    public function show(Exercise $exercise): View
+    {
+        Gate::authorize('view', $exercise);
+
+        return view('exercises.show', [
+            'exercise' => $exercise->load('submission', 'messages'),
         ]);
+    }
+
+    public function answer(Request $request, Exercise $exercise, ExerciseService $exercises): RedirectResponse
+    {
+        Gate::authorize('answer', $exercise);
+
+        $request->validate([
+            'choice' => ['required', Rule::enum(Variant::class)],
+            'explanation' => ['required', 'string', 'min:10', 'max:5000'],
+        ]);
+
+        try {
+            $exercises->answer($exercise, $request->enum('choice', Variant::class) ?? Variant::A, $request->string('explanation')->toString());
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->withInput()->with('error', 'De AI kon je antwoord nu niet beoordelen. Probeer het zo opnieuw.');
+        }
+
+        return redirect()->route('exercises.show', $exercise);
     }
 }
