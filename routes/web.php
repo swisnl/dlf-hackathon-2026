@@ -20,4 +20,6 @@ Route::middleware('auth')->group(function (): void {
     Route::put('profiel/wachtwoord', [PasswordController::class, 'update'])->name('profile.password');
 });
 
+Route::inertia('privacy', 'Privacy')->name('privacy');
+
 require __DIR__.'/auth.php';

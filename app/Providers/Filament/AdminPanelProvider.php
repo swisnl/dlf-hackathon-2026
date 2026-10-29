@@ -2,10 +2,9 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\AvatarProviders\InitialsAvatarProvider;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Models\User;
-use Awcodes\Gravatar\GravatarPlugin;
-use Awcodes\Gravatar\GravatarProvider;
 use Awcodes\LightSwitch\LightSwitchPlugin;
 use Cocosmos\FilamentStickySaveBar\Enums\ShowOn;
 use Cocosmos\FilamentStickySaveBar\StickySaveBarPlugin;
@@ -50,7 +49,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->unsavedChangesAlerts()
-            ->defaultAvatarProvider(GravatarProvider::class)
+            ->defaultAvatarProvider(InitialsAvatarProvider::class)
             ->spa()
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
@@ -119,7 +118,6 @@ class AdminPanelProvider extends PanelProvider
                         ->filter(fn (User $user): bool => $user->role->hasPanelAccess())
                         ->pluck('email', 'name')
                         ->all()),
-                GravatarPlugin::make(),
                 LightSwitchPlugin::make(),
                 StickySaveBarPlugin::make()
                     ->showOn(ShowOn::DirtyAlways),
