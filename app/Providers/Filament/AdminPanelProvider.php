@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Enums\UserRole;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Models\User;
 use Awcodes\Gravatar\GravatarPlugin;
@@ -16,6 +15,7 @@ use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -29,7 +29,9 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentColor;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Filament\View\PanelsRenderHook;
 use Filament\Widgets\AccountWidget;
+use Illuminate\Contracts\View\View;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
@@ -60,6 +62,12 @@ class AdminPanelProvider extends PanelProvider
                     ->collapsible(false),
             ])
             ->profile(EditProfile::class, false)
+            ->renderHook(
+                PanelsRenderHook::USER_MENU_BEFORE,
+                static fn (): ?View => ($user = Filament::auth()->user()) instanceof User
+                    ? view('filament.user-role-badge', ['role' => $user->role])
+                    : null,
+            )
             ->colors([
                 'primary' => Color::Purple,
                 'secondary' => Color::Neutral,
@@ -103,7 +111,13 @@ class AdminPanelProvider extends PanelProvider
                 FilamentDeveloperLoginsPlugin::make()
                     ->enabled(app()->environment('local'))
                     ->switchable(false)
-                    ->users(fn () => User::query()->where('role', UserRole::Admin)->pluck('email', 'name')->toArray()),
+                    ->users(fn (): array => User::query()
+                        ->whereIn('id', User::query()->selectRaw('min(id)')->groupBy('role'))
+                        ->orderBy('id')
+                        ->get()
+                        ->filter(fn (User $user): bool => $user->role->hasPanelAccess())
+                        ->pluck('email', 'name')
+                        ->all()),
                 GravatarPlugin::make(),
                 LightSwitchPlugin::make(),
                 StickySaveBarPlugin::make()

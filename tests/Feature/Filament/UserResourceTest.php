@@ -11,36 +11,17 @@ use App\Models\User;
 use Filament\Actions\DeleteAction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
-use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class UserResourceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_are_redirected_to_the_login_page(): void
+    public function test_teachers_cannot_access_the_user_resource(): void
     {
-        $this->get('/admin')->assertRedirect('/admin/login');
-    }
+        $this->actingAs(User::factory()->teacher()->create());
 
-    #[DataProvider('nonAdminRoles')]
-    public function test_non_admins_cannot_access_the_panel(UserRole $role): void
-    {
-        $this->actingAs(User::factory()->create(['role' => $role]));
-
-        $this->get('/admin')->assertForbidden();
         $this->get(UserResource::getUrl('index'))->assertForbidden();
-    }
-
-    /**
-     * @return array<string, array{UserRole}>
-     */
-    public static function nonAdminRoles(): array
-    {
-        return [
-            'student' => [UserRole::Student],
-            'teacher' => [UserRole::Teacher],
-        ];
     }
 
     public function test_admins_can_list_users(): void

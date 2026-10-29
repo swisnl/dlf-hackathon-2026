@@ -17,21 +17,18 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(TopicSeeder::class);
 
-        // User::factory(10)->create();
-
         User::factory()->admin()->create([
-            'name' => 'Admin',
             'email' => 'admin@example.com',
         ]);
 
         User::factory()->teacher()->create([
-            'name' => 'Docent',
             'email' => 'teacher@example.com',
         ]);
+        User::factory()->teacher()->count(2)->create();
 
         User::factory()->create([
-            'name' => 'Student',
             'email' => 'student@example.com',
         ]);
+        User::factory()->count(29)->create();
     }
 }
