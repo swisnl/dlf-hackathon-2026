@@ -64,6 +64,16 @@ class Exercise extends Model
     }
 
     /**
+     * The lines of the wrong class that contain an error; every exercise has at least one.
+     *
+     * @return list<int>
+     */
+    public function errorLines(): array
+    {
+        return array_values($this->errors->map(fn (ExerciseError $error): int => $error->line)->all());
+    }
+
+    /**
      * @return HasMany<Attempt, $this>
      */
     public function attempts(): HasMany
