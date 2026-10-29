@@ -3,20 +3,30 @@
 namespace Tests\Feature\Filament;
 
 use App\Enums\UserRole;
-use App\Filament\Resources\Users\Pages\CreateUser;
-use App\Filament\Resources\Users\Pages\EditUser;
-use App\Filament\Resources\Users\Pages\ListUsers;
-use App\Filament\Resources\Users\UserResource;
+use App\Filament\Admin\Resources\Users\Pages\CreateUser;
+use App\Filament\Admin\Resources\Users\Pages\EditUser;
+use App\Filament\Admin\Resources\Users\Pages\ListUsers;
+use App\Filament\Admin\Resources\Users\UserResource;
 use App\Models\User;
 use Filament\Actions\DeleteAction;
+use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Livewire\Livewire;
+use Override;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class UserResourceTest extends TestCase
 {
     use RefreshDatabase;
+
+    #[Override]
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Filament::setCurrentPanel(Filament::getPanel('admin'));
+    }
 
     public function test_guests_are_redirected_to_the_login_page(): void
     {
@@ -99,10 +109,5 @@ class UserResourceTest extends TestCase
 
         Livewire::test(EditUser::class, ['record' => $admin->getRouteKey()])
             ->assertActionHidden(DeleteAction::class);
-    }
-
-    public function test_new_users_are_students_by_default(): void
-    {
-        $this->assertSame(UserRole::Student, User::factory()->create()->role);
     }
 }

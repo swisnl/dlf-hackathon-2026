@@ -1,7 +1,3 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-Route::get('/', function () {
-    return view('welcome');
-});
+// The app panel (App\Providers\Filament\AppPanelProvider) serves the root of the application.

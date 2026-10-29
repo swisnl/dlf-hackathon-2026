@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Filament\Resources\Users\Schemas;
+namespace App\Filament\Admin\Resources\Users\Schemas;
 
 use App\Enums\UserRole;
 use App\Filament\Infolists\Components\Timestamp;
