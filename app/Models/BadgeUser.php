@@ -10,6 +10,9 @@ use Illuminate\Database\Eloquent\Relations\Pivot;
 
 /**
  * A badge awarded to a user (the badge_user pivot).
+ *
+ * @property \Illuminate\Support\Carbon      $awarded_at
+ * @property \Illuminate\Support\Carbon|null $seen_at
  */
 #[Fillable(
     ['badge_id', 'user_id', 'awarded_at', 'seen_at'],
