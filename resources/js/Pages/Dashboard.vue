@@ -4,6 +4,7 @@ import { Link, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import BadgeMedal from '@/Components/BadgeMedal.vue'
 import Owl from '@/Components/Owl.vue'
+import { openWijsje } from '@/wijsje'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import StarIcon from '@/Components/StarIcon.vue'
 import StatusChip from '@/Components/StatusChip.vue'
@@ -167,8 +168,9 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
                 <div class="flex items-start gap-3.5 rounded-[20px] bg-ink p-[22px] text-white">
                     <Owl class="size-11 shrink-0" />
                     <div class="flex flex-col gap-1.5">
-                        <b>Tip van de uil</b>
+                        <b>Tip van Wijsje</b>
                         <p class="text-[15px] leading-normal text-[#E9E5F5]">{{ tip }}</p>
+                        <button type="button" class="mt-1 self-start text-left text-[15px] font-semibold text-white underline hover:text-purple-100" @click="openWijsje">Snap je iets niet? Vraag het Wijsje</button>
                     </div>
                 </div>
             </aside>

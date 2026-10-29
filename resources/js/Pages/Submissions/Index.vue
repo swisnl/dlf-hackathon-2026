@@ -1,4 +1,5 @@
 <script setup>
+import WijsjeBusy from '@/Components/WijsjeBusy.vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import FieldError from '@/Components/FieldError.vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
@@ -53,9 +54,10 @@ function submit() {
                         <FieldError :message="form.errors.code" />
                     </div>
                     <div class="flex flex-wrap items-center gap-4">
-                        <button type="submit" class="btn-primary" :disabled="form.processing">{{ form.processing ? 'De AI maakt een vraag…' : 'Upload en start' }}</button>
-                        <p class="text-sm text-ink-muted">De AI heeft even nodig om een vraag te maken.</p>
+                        <button type="submit" class="btn-primary" :disabled="form.processing">{{ form.processing ? 'Wijsje maakt een vraag…' : 'Upload en start' }}</button>
+                        <p class="text-sm text-ink-muted">Wijsje heeft even nodig om een vraag te maken.</p>
                     </div>
+                    <WijsjeBusy v-if="form.processing" task="creating" />
                 </form>
             </section>
 

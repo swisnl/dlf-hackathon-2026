@@ -1,34 +1,31 @@
-<script>
-import { reactive } from 'vue'
-
-// Shared by every page, so the conversation survives navigating between pages. It is never stored on the server (#31).
-const conversation = reactive({ open: false, messages: [] })
-</script>
-
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePage } from '@inertiajs/vue3'
 import Owl from '@/Components/Owl.vue'
+import WijsjeThinking from '@/Components/WijsjeThinking.vue'
+import { wijsje as conversation } from '@/wijsje'
 
 const MAX_HISTORY = 10
 
-// Shown while Wijsje waits for the AI; a new one every few seconds so a slow answer still feels alive.
-const THINKING = [
-    'Wijsje denkt na…',
-    'Even mijn veren schudden…',
-    'Ik zet mijn uilenbril op…',
-    'Oehoe, even denken…',
-    'Ik draai mijn kop een rondje…',
-    'Even in mijn boom zoeken…',
-    'Ik blader door mijn Laravel-boek…',
-    'Even de code lezen…',
-    'Ik zoek de makkelijkste woorden…',
-    'Ik maak het simpel voor je…',
-    'Goede vraag! Even denken…',
-    'Hmm, slimme vraag…',
-    'Ik bedenk een goed voorbeeld…',
-]
-const THINKING_INTERVAL = 4000
+
+// After this long without moving, typing or scrolling, Wijsje offers to help; "Nee, dank je" keeps him quiet for a while.
+const IDLE_DELAY = 45000
+const NUDGE_SNOOZE = 5 * 60 * 1000
+const NUDGES = {
+    exercise: [
+        'Lastige oefening? Ik leg het graag simpel uit.',
+        'Snap je een woord in deze code niet? Vraag het mij!',
+        'Twijfel je? Vraag gerust. Ik verklap het antwoord niet.',
+    ],
+    page: [
+        'Kom je ergens niet uit? Vraag het mij!',
+        'Is er een woord dat je niet snapt? Ik leg het uit.',
+        'Er bestaan geen domme vragen. Vraag maar raak!',
+    ],
+}
+
+// Shown under each answer, so asking a follow-up question is one click away.
+const FOLLOW_UPS = ['Kun je een voorbeeld geven?', 'Kan het nog simpeler?', 'Hoe ziet dat eruit in code?']
 
 const page = usePage()
 const toggle = ref(null)
@@ -36,24 +33,7 @@ const input = ref(null)
 const log = ref(null)
 const question = ref('')
 const busy = ref(false)
-const thinking = ref(THINKING[0])
-let thinkingTimer = null
 
-const pickThinking = () => {
-    const others = THINKING.filter(text => text !== thinking.value)
-    thinking.value = others[Math.floor(Math.random() * others.length)]
-}
-
-watch(busy, isBusy => {
-    clearInterval(thinkingTimer)
-
-    if (isBusy) {
-        pickThinking()
-        thinkingTimer = setInterval(pickThinking, THINKING_INTERVAL)
-    }
-})
-
-onBeforeUnmount(() => clearInterval(thinkingTimer))
 const error = ref(null)
 
 const exercise = computed(() => (page.component === 'Exercises/Show' ? page.props.exercise : null))
@@ -62,12 +42,66 @@ const suggestions = computed(() => (exercise.value
     ? ['Leg deze oefening simpel uit', `Wat betekent ${exercise.value.topic}?`, 'Waar moet ik op letten?']
     : ['Wat is een migration?', 'Wat betekent mass assignment?', 'Wat doet een controller?']))
 
-const open = async () => {
+const nudge = ref(null)
+let idleTimer = null
+let nudgedOnThisPage = false
+
+const startIdleTimer = () => {
+    clearTimeout(idleTimer)
+
+    if (!nudgedOnThisPage) {
+        idleTimer = setTimeout(showNudge, IDLE_DELAY)
+    }
+}
+
+const showNudge = () => {
+    if (conversation.open || busy.value || Date.now() < conversation.nudgeSnoozedUntil) {
+        return startIdleTimer()
+    }
+
+    const options = NUDGES[exercise.value ? 'exercise' : 'page']
+    nudge.value = options[Math.floor(Math.random() * options.length)]
+    nudgedOnThisPage = true
+}
+
+const dismissNudge = () => {
+    nudge.value = null
+    conversation.nudgeSnoozedUntil = Date.now() + NUDGE_SNOOZE
+    toggle.value?.focus()
+}
+
+const ACTIVITY = ['pointermove', 'pointerdown', 'keydown', 'scroll']
+
+onMounted(() => {
+    ACTIVITY.forEach(event => window.addEventListener(event, startIdleTimer, { passive: true }))
+    startIdleTimer()
+
+    // Still open from the previous page: show the newest message, but leave the focus with the new page.
+    log.value?.scrollTo({ top: log.value.scrollHeight })
+})
+
+onBeforeUnmount(() => {
+    ACTIVITY.forEach(event => window.removeEventListener(event, startIdleTimer))
+    clearTimeout(idleTimer)
+})
+
+const showFollowUps = computed(() => !busy.value && conversation.messages.at(-1)?.role === 'wijsje')
+
+const open = () => {
     conversation.open = true
+}
+
+// However the panel opens (the owl, the nudge or a page like the dashboard), put the student straight in the text box.
+watch(() => conversation.open, async isOpen => {
+    if (!isOpen) {
+        return
+    }
+
+    nudge.value = null
     await nextTick()
     log.value?.scrollTo({ top: log.value.scrollHeight })
     input.value?.focus()
-}
+})
 
 const close = () => {
     conversation.open = false
@@ -175,16 +209,17 @@ const onKeydown = event => {
                     </div>
                 </template>
 
-                <div v-if="busy" class="flex items-end gap-2">
-                    <Owl class="size-7 shrink-0" />
-                    <p class="flex items-center gap-2.5 rounded-2xl rounded-bl-md bg-paper px-3.5 py-2.5 text-ink-muted">
-                        <span class="flex items-center gap-1" aria-hidden="true">
-                            <span v-for="delay in ['0ms', '150ms', '300ms']" :key="delay" class="size-2 rounded-full bg-purple-600 motion-safe:animate-bounce" :style="{ animationDelay: delay }" />
-                        </span>
-                        <!-- The rotating text is for the eye only; a screen reader hears one steady message. -->
-                        <span aria-hidden="true">{{ thinking }}</span>
-                        <span class="sr-only">Wijsje denkt na</span>
-                    </p>
+                <WijsjeThinking v-if="busy" />
+                <div v-if="showFollowUps" class="flex flex-wrap gap-2 ps-9">
+                    <button
+                        v-for="followUp in FOLLOW_UPS"
+                        :key="followUp"
+                        type="button"
+                        class="rounded-full border-2 border-purple-600 px-3 py-1.5 text-sm font-semibold text-purple-800 hover:bg-purple-100"
+                        @click="ask(followUp)"
+                    >
+                        {{ followUp }}
+                    </button>
                 </div>
                 <p v-if="error" class="rounded-[14px] bg-missed-light px-3.5 py-2.5 text-[15px] text-missed-text" role="alert">{{ error }}</p>
             </div>
@@ -204,6 +239,19 @@ const onKeydown = event => {
                 <button type="submit" class="btn-primary px-4 py-2.5" :disabled="busy || question.trim() === ''">Vraag</button>
             </form>
         </section>
+
+        <div
+            v-if="nudge && !conversation.open"
+            role="status"
+            class="relative w-[min(280px,calc(100vw-2rem))] rounded-[20px] bg-ink p-4 text-white shadow-[0_12px_40px_rgba(29,26,47,0.25)] motion-safe:animate-[wijsje-pop_200ms_ease-out]"
+        >
+            <p class="pe-6 leading-snug">{{ nudge }}</p>
+            <div class="mt-3 flex flex-wrap gap-2">
+                <button type="button" class="rounded-[14px] bg-white px-3.5 py-2 text-sm font-bold text-ink hover:bg-purple-100" @click="open">Ja, help me</button>
+                <button type="button" class="rounded-[14px] px-3 py-2 text-sm font-semibold text-[#E9E5F5] hover:bg-white/10" @click="dismissNudge">Nee, dank je</button>
+            </div>
+            <span class="absolute right-10 -bottom-2 size-4 rotate-45 bg-ink" aria-hidden="true" />
+        </div>
 
         <button
             ref="toggle"

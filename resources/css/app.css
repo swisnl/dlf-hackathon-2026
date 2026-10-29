@@ -33,6 +33,23 @@
     --color-line-light: #eadfd6;
 }
 
+@keyframes wijsje-progress {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(300%);
+    }
+}
+
+@keyframes wijsje-pop {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+    }
+}
+
 @layer base {
     body {
         @apply bg-paper font-sans text-ink antialiased;
