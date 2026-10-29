@@ -5,9 +5,9 @@
             <h1 class="text-2xl font-semibold">{{ $submission->title }}</h1>
             <p class="text-stone-600">{{ $submission->filename ?? 'Geplakte code' }}</p>
         </div>
-        <form method="POST" action="{{ route('exercises.store', $submission) }}">
+        <form method="POST" action="{{ route('exercises.store', $submission) }}" data-ai="De AI maakt een vraag…">
             @csrf
-            <button type="submit" class="rounded-lg bg-stone-900 px-4 py-2 font-medium text-white hover:bg-stone-700">Stel me een nieuwe vraag</button>
+            <button type="submit" class="rounded-lg bg-stone-900 px-4 py-2 font-medium text-white hover:bg-stone-700 disabled:cursor-wait disabled:opacity-60">Stel me een nieuwe vraag</button>
         </form>
     </div>
 

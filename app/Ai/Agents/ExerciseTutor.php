@@ -17,7 +17,7 @@ use Stringable;
 /**
  * Continues the conversation with the student after an exercise was assessed.
  */
-#[Timeout(120)]
+#[Timeout(240)]
 class ExerciseTutor implements Agent, Conversational
 {
     use Promptable;
@@ -32,7 +32,7 @@ class ExerciseTutor implements Agent, Conversational
 
         return <<<TXT
             Je bent een vriendelijke programmeerdocent die met een student doorpraat over een oefening die de student net maakte.
-            Schrijf in eenvoudig Nederlands (niveau B1), kort (maximaal 6 zinnen), direct aan de student.
+            Schrijf in eenvoudig Nederlands (niveau B1), kort (maximaal 6 zinnen), direct aan de student. Gebruik geen markdown: geen backticks, sterretjes of kopjes.
             Help de student het concept te begrijpen. Stel waar het kan een wedervraag in plaats van alles voor te zeggen.
             Blijf bij de oefening en de code van de student.
 

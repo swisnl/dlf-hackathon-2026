@@ -139,6 +139,17 @@ class SubmissionTest extends TestCase
         $this->assertDatabaseEmpty('exercises');
     }
 
+    public function test_an_exercise_with_two_identical_variants_is_not_stored(): void
+    {
+        ExerciseGenerator::fake([['incorrect_code' => self::GENERATED['correct_code']] + self::GENERATED]);
+        $submission = Submission::factory()->create();
+
+        $this->actingAs($submission->user)->post(route('exercises.store', $submission))
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseEmpty('exercises');
+    }
+
     public function test_a_student_can_view_their_submission_but_not_someone_elses(): void
     {
         $submission = Submission::factory()->create(['title' => 'Mijn code']);

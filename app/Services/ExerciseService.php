@@ -11,6 +11,7 @@ use App\Models\Exercise;
 use App\Models\ExerciseMessage;
 use App\Models\Submission;
 use Illuminate\Support\Lottery;
+use RuntimeException;
 
 class ExerciseService
 {
@@ -29,6 +30,10 @@ class ExerciseService
         $correct = Lottery::odds(1, 2)->winner(fn () => Variant::A)->loser(fn () => Variant::B)->choose();
         $correctCode = $this->string($response['correct_code']);
         $incorrectCode = $this->string($response['incorrect_code']);
+
+        if ($correctCode === '' || $correctCode === $incorrectCode) {
+            throw new RuntimeException('The AI generated an exercise without two different variants.');
+        }
 
         $exercise = new Exercise([
             'concept' => $this->string($response['concept']),
@@ -74,7 +79,7 @@ class ExerciseService
 
         $response = (new ExerciseTutor($exercise))->prompt($content);
 
-        return $exercise->messages()->create(['role' => ExerciseMessageRole::Tutor, 'content' => $response->text]);
+        return $exercise->messages()->create(['role' => ExerciseMessageRole::Tutor, 'content' => trim($response->text)]);
     }
 
     private function string(mixed $value): string
