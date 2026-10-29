@@ -13,6 +13,25 @@ enum UserRole: string implements HasColor, HasIcon, HasLabel
     case Teacher = 'teacher';
     case Admin = 'admin';
 
+    /**
+     * Whether this role may use the Filament admin panel.
+     */
+    public function hasPanelAccess(): bool
+    {
+        return match ($this) {
+            self::Student => false,
+            self::Teacher, self::Admin => true,
+        };
+    }
+
+    /**
+     * @return list<self>
+     */
+    public static function withPanelAccess(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $role): bool => $role->hasPanelAccess()));
+    }
+
     public function getLabel(): string
     {
         return match ($this) {

@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Enums\UserRole;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Models\User;
 use Awcodes\Gravatar\GravatarPlugin;
@@ -41,20 +42,19 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use pxlrbt\FilamentEnvironmentIndicator\EnvironmentIndicatorPlugin;
 use Swis\Filament\Backgrounds\FilamentBackgroundsPlugin;
 
-class AppPanelProvider extends PanelProvider
+class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
             ->default()
-            ->id('app')
-            ->path('')
+            ->id('admin')
+            ->path('admin')
             ->unsavedChangesAlerts()
             ->defaultAvatarProvider(GravatarProvider::class)
             ->spa()
-            ->viteTheme('resources/css/filament/app/theme.css')
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->login()
-            ->registration()
             ->passwordReset()
             ->maxContentWidth('full')
             ->sidebarWidth('fit-content')
@@ -114,6 +114,7 @@ class AppPanelProvider extends PanelProvider
                     ->switchable(false)
                     ->users(fn (): array => User::query()
                         ->whereIn('id', User::query()->selectRaw('min(id)')->groupBy('role'))
+                        ->whereIn('role', UserRole::withPanelAccess())
                         ->orderBy('id')
                         ->pluck('email', 'name')
                         ->all()),
