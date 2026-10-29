@@ -87,14 +87,23 @@ class Exercise extends Model
     }
 
     /**
-     * Only exercises that students can see.
+     * Only the published exercises the student can see: those for every student, and those the AI made about the student's own code.
      *
      * @param Builder<$this> $query
      */
     #[Scope]
-    protected function published(Builder $query): void
+    protected function visibleTo(Builder $query, User $user): void
     {
-        $query->whereNotNull('published_at');
+        $query->whereNotNull('published_at')
+            ->where(fn (Builder $query) => $query->whereNull('submission_id')->orWhereRelation('submission', 'user_id', $user->id));
+    }
+
+    /**
+     * Whether the AI made this exercise about a student's own code.
+     */
+    public function isAiGenerated(): bool
+    {
+        return $this->submission_id !== null;
     }
 
     /**

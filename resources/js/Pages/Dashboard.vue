@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Link, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import AiChip from '@/Components/AiChip.vue'
 import BadgeMedal from '@/Components/BadgeMedal.vue'
 import Owl from '@/Components/Owl.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
@@ -124,6 +125,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
                         <b class="text-[17px]">{{ exercise.title }}</b>
                         <div class="flex flex-wrap gap-2">
                             <TopicChip :topic="exercise.topic" />
+                            <AiChip v-if="exercise.aiGenerated" />
                             <StatusChip :status="exercise.status" :label="exercise.statusLabel" />
                         </div>
                     </div>

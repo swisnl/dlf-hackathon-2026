@@ -25,7 +25,7 @@ class DashboardController extends Controller
         $earnedBadgeIds = $user->badges()->pluck('badges.id');
 
         $exercises = Exercise::query()
-            ->published()
+            ->visibleTo($user)
             ->withProgressOf($user)
             ->with('topic')
             ->orderBy('published_at')

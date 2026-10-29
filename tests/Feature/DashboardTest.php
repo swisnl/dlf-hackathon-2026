@@ -69,6 +69,8 @@ class DashboardTest extends TestCase
         $student = User::factory()->create();
         [$new, $retry, $done, $otherNew] = Exercise::factory()->count(4)->create(['stars' => 4]);
         Exercise::factory()->unpublished()->create();
+        // Another student's AI exercise does not count either.
+        Exercise::factory()->forSubmission()->create();
 
         Progress::factory()->retry()->create(['user_id' => $student->id, 'exercise_id' => $retry->id, 'best_stars' => 1]);
         Progress::factory()->done()->create(['user_id' => $student->id, 'exercise_id' => $done->id]);

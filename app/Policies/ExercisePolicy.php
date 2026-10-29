@@ -83,11 +83,14 @@ final class ExercisePolicy
     }
 
     /**
-     * Whether the exercise is published for every student, or the AI made it about the user's own code.
+     * Whether the AI made the exercise about the user's own code, or it is published for every student.
      */
     private function canPractise(User $user, Exercise $exercise): bool
     {
-        return $exercise->published_at !== null
-            || ($exercise->submission !== null && $exercise->submission->user_id === $user->id);
+        if ($exercise->submission !== null) {
+            return $exercise->submission->user_id === $user->id;
+        }
+
+        return $exercise->published_at !== null;
     }
 }

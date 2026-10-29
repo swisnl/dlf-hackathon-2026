@@ -31,7 +31,7 @@ class ExerciseController extends Controller
         $status = $request->enum('status', ProgressStatus::class);
 
         $exercises = Exercise::query()
-            ->published()
+            ->visibleTo($user)
             ->withProgressOf($user)
             ->with('topic')
             ->when($topic, fn (Builder $query) => $query->whereRelation('topic', 'name', $topic))

@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Exercise;
 use App\Models\Progress;
+use App\Models\Submission;
 use App\Models\Topic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -46,6 +47,23 @@ class ExerciseIndexTest extends TestCase
                 ->where('exercises.2.status', 'done')
                 ->where('exercises.2.bestStars', 2)
                 ->where('filters', ['topic' => null, 'status' => null]));
+    }
+
+    public function test_a_student_only_sees_the_ai_exercises_about_their_own_code(): void
+    {
+        $student = User::factory()->create();
+        $shared = Exercise::factory()->create(['published_at' => now()->subDay()]);
+        $own = Exercise::factory()->forSubmission(Submission::factory()->for($student)->create())->create();
+        Exercise::factory()->forSubmission()->create();
+
+        $this->actingAs($student)
+            ->get('/exercises')
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->has('exercises', 2)
+                ->where('exercises.0.id', $shared->id)
+                ->where('exercises.0.aiGenerated', false)
+                ->where('exercises.1.id', $own->id)
+                ->where('exercises.1.aiGenerated', true));
     }
 
     public function test_exercises_can_be_filtered_by_topic(): void

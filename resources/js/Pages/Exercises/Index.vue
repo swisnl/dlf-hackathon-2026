@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import AiChip from '@/Components/AiChip.vue'
 import StarIcon from '@/Components/StarIcon.vue'
 import StatusChip from '@/Components/StatusChip.vue'
 import TopicChip from '@/Components/TopicChip.vue'
@@ -77,7 +78,10 @@ const actions = {
                 class="flex min-h-[196px] flex-col gap-3.5 rounded-[20px] border border-line-soft bg-white p-[22px]"
             >
                 <div class="flex flex-wrap justify-between gap-2">
-                    <TopicChip :topic="exercise.topic" />
+                    <div class="flex flex-wrap gap-2">
+                        <TopicChip :topic="exercise.topic" />
+                        <AiChip v-if="exercise.aiGenerated" />
+                    </div>
                     <StatusChip :status="exercise.status" :label="exercise.statusLabel" />
                 </div>
 

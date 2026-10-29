@@ -25,6 +25,7 @@ class StudentExerciseResource extends JsonResource
             'status' => $this->statusOfStudent()->value,
             'statusLabel' => $this->statusOfStudent()->getLabel(),
             'topic' => $this->topic?->only('name', 'color', 'text_color'),
+            'aiGenerated' => $this->isAiGenerated(),
         ];
     }
 }

@@ -69,7 +69,6 @@ class ExerciseFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'submission_id' => $submission ?? Submission::factory(),
-            'published_at' => null,
         ]);
     }
 }

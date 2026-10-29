@@ -70,6 +70,15 @@ class ExerciseTest extends TestCase
         $this->assertDatabaseHas('attempts', ['exercise_id' => $exercise->id, 'user_id' => $student->id]);
     }
 
+    public function test_a_published_ai_exercise_stays_hidden_for_other_students(): void
+    {
+        $exercise = $this->exercise();
+        $this->assertNotNull($exercise->published_at);
+
+        $this->actingAs(User::factory()->create())->get(route('exercises.show', $exercise))
+            ->assertForbidden();
+    }
+
     public function test_an_unpublished_exercise_without_a_submission_stays_hidden(): void
     {
         $exercise = Exercise::factory()->unpublished()->create();

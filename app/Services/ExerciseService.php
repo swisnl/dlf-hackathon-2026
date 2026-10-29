@@ -64,8 +64,8 @@ class ExerciseService
                 'stars' => self::STARS,
                 'correct_code' => $correctCode,
                 'wrong_code' => $wrongCode,
-                // Exercises about a student's own code are only for that student.
-                'published_at' => null,
+                // Published right away; Exercise::visibleTo() keeps it for this student only.
+                'published_at' => now(),
             ]);
             $exercise->errors()->createMany($errors);
 

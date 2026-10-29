@@ -77,7 +77,7 @@ class SubmissionTest extends TestCase
         $this->assertSame('Classes', $exercise->topic->name);
         $this->assertSame('Welke constructor is juist?', $exercise->title);
         $this->assertSame(3, $exercise->stars);
-        $this->assertNull($exercise->published_at);
+        $this->assertNotNull($exercise->published_at);
         $this->assertSame(self::GENERATED['correct_code'], $exercise->correct_code);
         $this->assertSame(self::GENERATED['incorrect_code'], $exercise->wrong_code);
 

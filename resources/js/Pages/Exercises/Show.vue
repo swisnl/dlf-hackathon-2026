@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
+import AiChip from '@/Components/AiChip.vue'
 import CodeLines from '@/Components/CodeLines.vue'
 import FieldError from '@/Components/FieldError.vue'
 import InlineCode from '@/Components/InlineCode.vue'
@@ -75,6 +76,7 @@ function nextExercise() {
             <div class="mt-3 flex flex-col gap-2.5">
                 <div class="flex flex-wrap gap-2">
                     <span class="chip bg-purple-100 text-purple-800">{{ exercise.topic }}</span>
+                    <AiChip v-if="exercise.submission" />
                     <span v-if="attempt" class="chip bg-found-light text-[#075E5A]"><span aria-hidden="true">✓</span> Gemaakt</span>
                 </div>
                 <h1 class="font-display text-3xl font-extrabold tracking-tight sm:text-[40px] sm:leading-tight">{{ exercise.title }}</h1>
