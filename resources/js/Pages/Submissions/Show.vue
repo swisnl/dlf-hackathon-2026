@@ -35,7 +35,7 @@ function newExercise() {
                     <span class="block text-lg font-bold">{{ exercise.topic }}</span>
                     <span class="block text-ink-muted">{{ exercise.title }}</span>
                 </span>
-                <span v-if="exercise.earned_stars !== null" class="chip shrink-0 bg-found-light text-[#075E5A]">Gemaakt · {{ exercise.earned_stars }} van {{ exercise.stars }} sterren</span>
+                <span v-if="exercise.earned_stars !== null" class="chip shrink-0 bg-found-light text-[#075E5A]"><span aria-hidden="true">✓</span> Gemaakt · {{ exercise.earned_stars }} van {{ exercise.stars }} sterren</span>
                 <span v-else class="chip shrink-0 bg-purple-100 text-purple-800">Nieuw</span>
             </Link>
             <p v-if="exercises.length === 0" class="card mt-3 p-5 text-ink-muted">Nog geen vragen. Klik op de knop en de AI maakt er een.</p>

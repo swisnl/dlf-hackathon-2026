@@ -45,7 +45,7 @@ function nextExercise() {
             <div class="mt-3 flex flex-col gap-2.5">
                 <div class="flex flex-wrap gap-2">
                     <span class="chip bg-purple-100 text-purple-800">{{ exercise.topic }}</span>
-                    <span v-if="attempt" class="chip bg-found-light text-[#075E5A]">Gemaakt</span>
+                    <span v-if="attempt" class="chip bg-found-light text-[#075E5A]"><span aria-hidden="true">✓</span> Gemaakt</span>
                 </div>
                 <h1 class="font-display text-3xl font-extrabold tracking-tight sm:text-[40px] sm:leading-tight">{{ exercise.title }}</h1>
                 <p v-if="!attempt" class="max-w-3xl text-lg text-ink-muted">Eén van deze twee versies klopt. Kies de goede en leg uit <b class="text-ink">waarom</b>.</p>
@@ -86,7 +86,7 @@ function nextExercise() {
                     <section v-for="variant in variants" :key="variant.value" :class="['card min-w-0 overflow-hidden border-2', { 'border-found': variant.correct }]">
                         <div class="flex flex-wrap items-center gap-2 border-b border-line-light px-4 py-3.5">
                             <b class="font-display text-xl">{{ variant.label }}</b>
-                            <span v-if="variant.correct" class="chip bg-found-light text-[#075E5A]">Juist</span>
+                            <span v-if="variant.correct" class="chip bg-found-light text-[#075E5A]"><span aria-hidden="true">✓</span> Juist</span>
                             <span v-if="variant.value === attempt.chosen" class="chip bg-purple-100 text-purple-800">Jouw keuze</span>
                         </div>
                         <CodeBlock :code="variant.code" class="m-3" />
@@ -96,7 +96,7 @@ function nextExercise() {
                 <section class="card mt-5 flex flex-col gap-5 p-5 sm:p-7">
                     <div class="flex flex-wrap items-center justify-between gap-3">
                         <h2 class="font-display text-[28px] font-extrabold">{{ attempt.correct ? 'Scherp gezien!' : 'Bijna! De andere versie klopt.' }}</h2>
-                        <span :class="['chip', attempt.stars > 0 ? 'bg-found-light text-[#075E5A]' : 'bg-missed-light text-missed-text']" title="Een inschatting van de AI">{{ attempt.stars }} van {{ exercise.stars }} sterren</span>
+                        <span :class="['chip', attempt.stars > 0 ? 'bg-found-light text-[#075E5A]' : 'bg-missed-light text-missed-text']" title="Een inschatting van de AI"><span aria-hidden="true">{{ attempt.stars > 0 ? '✓' : '×' }}</span> {{ attempt.stars }} van {{ exercise.stars }} sterren</span>
                     </div>
                     <div>
                         <h3 class="text-sm font-semibold text-ink-muted">Jouw uitleg</h3>
