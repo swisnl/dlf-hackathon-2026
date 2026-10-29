@@ -1,4 +1,4 @@
 @props(['name'])
 @error($name)
-    <p class="text-sm font-semibold text-gemist">{{ $message }}</p>
+    <p {{ $attributes->merge(['class' => 'text-sm font-semibold text-gemist-tekst']) }}>{{ $message }}</p>
 @enderror

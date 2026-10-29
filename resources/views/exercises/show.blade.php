@@ -30,7 +30,7 @@
                         </label>
                     @endforeach
                 </div>
-                <x-field-error name="choice" />
+                <x-field-error name="choice" class="mt-3" />
             </fieldset>
 
             <div class="card mt-5 flex flex-col gap-2 p-5 sm:p-6">
@@ -65,7 +65,7 @@
         <section class="card mt-5 flex flex-col gap-5 p-5 sm:p-7">
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <h2 class="font-display text-[28px] font-extrabold">{{ $exercise->is_correct ? 'Scherp gezien!' : 'Bijna! De andere versie klopt.' }}</h2>
-                <span class="chip bg-ster-licht text-[#6B4B00]" title="Een inschatting van de AI">Score van de AI: {{ $exercise->score }}/10</span>
+                <span @class(['chip', 'bg-gevonden-licht text-[#075E5A]' => $exercise->is_correct, 'bg-gemist-licht text-gemist-tekst' => ! $exercise->is_correct]) title="Een inschatting van de AI">Score van de AI: {{ $exercise->score }}/10</span>
             </div>
             <div>
                 <h3 class="text-sm font-semibold text-inkt-zacht">Jouw uitleg</h3>

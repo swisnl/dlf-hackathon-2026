@@ -20,7 +20,8 @@
                     ]) @if (request()->routeIs('submissions.*', 'exercises.*')) aria-current="page" @endif>Mijn code</a>
                 </nav>
                 <div class="ml-auto flex items-center gap-3">
-                    <span class="hidden size-11 items-center sm:flex justify-center rounded-full bg-inkt font-bold text-white" title="{{ auth()->user()?->name }}" aria-label="Ingelogd als {{ auth()->user()?->name }}">{{ Str::of(auth()->user()?->name ?? '')->explode(' ')->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('') }}</span>
+                    <span class="hidden size-11 items-center sm:flex justify-center rounded-full bg-inkt font-bold text-white" title="{{ auth()->user()?->name }}" aria-hidden="true">{{ Str::of(auth()->user()?->name ?? '')->explode(' ')->filter()->take(2)->map(fn ($part) => mb_strtoupper(mb_substr($part, 0, 1)))->implode('') }}</span>
+                    <span class="sr-only">Ingelogd als {{ auth()->user()?->name }}</span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="font-semibold text-inkt-zacht underline-offset-4 hover:text-inkt hover:underline">Uitloggen</button>
@@ -32,7 +33,7 @@
 
     <main class="mx-auto max-w-6xl px-4 pt-8 pb-16 sm:px-6 sm:pt-10">
         @if (session('error'))
-            <div class="mb-6 rounded-[14px] bg-gemist-licht px-4 py-3 text-[15px] text-[#8A4300]" role="alert">{{ session('error') }}</div>
+            <div class="mb-6 rounded-[14px] bg-gemist-licht px-4 py-3 text-[15px] text-gemist-tekst" role="alert">{{ session('error') }}</div>
         @endif
 
         {{ $slot }}

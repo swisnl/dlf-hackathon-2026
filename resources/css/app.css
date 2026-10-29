@@ -21,6 +21,8 @@
     --color-gevonden-licht: #e1f4f2;
     --color-gemist: #c25e00;
     --color-gemist-licht: #fff0dc;
+    /* #C25E00 is too light for text on white (4.29:1); use this for text. */
+    --color-gemist-tekst: #8a4300;
     --color-papier: #fff8f2;
     --color-code: #fbf7f3;
     --color-rand: #eadfd6;
