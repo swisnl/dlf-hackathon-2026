@@ -43,6 +43,21 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     ];
 
     /**
+     * Award the badges for any star threshold the student reached, whichever way the stars changed.
+     */
+    protected static function booted(): void
+    {
+        static::created(fn (User $user) => $user->awardBadges());
+
+        // increment() fires "updated" but not "saved".
+        static::updated(function (User $user): void {
+            if ($user->wasChanged('stars')) {
+                $user->awardBadges();
+            }
+        });
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -107,6 +122,29 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             ->using(BadgeUser::class)
             ->withPivot(['awarded_at', 'seen_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * Award every badge whose threshold the student's stars reach and that they do not have yet.
+     * Badges are never taken away, and inserting with "or ignore" keeps two concurrent awards from clashing.
+     */
+    public function awardBadges(): void
+    {
+        $now = now();
+
+        BadgeUser::query()->insertOrIgnore(
+            Badge::query()
+                ->where('threshold', '<=', $this->stars)
+                ->get(['id'])
+                ->map(fn (Badge $badge): array => [
+                    'badge_id' => $badge->id,
+                    'user_id' => $this->getKey(),
+                    'awarded_at' => $now,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ])
+                ->all(),
+        );
     }
 
     /**

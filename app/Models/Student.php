@@ -15,6 +15,8 @@ class Student extends User
 
     protected static function booted(): void
     {
+        parent::booted();
+
         static::addGlobalScope('student', static fn (Builder $query) => $query->where('role', UserRole::Student));
     }
 

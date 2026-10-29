@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Enums\CodeSide;
 use App\Enums\ProgressStatus;
 use App\Grading\AttemptGrader;
-use App\Models\Badge;
 use App\Models\Exercise;
 use App\Models\Student;
 use Illuminate\Database\Seeder;
@@ -14,14 +13,13 @@ class DemoProgressSeeder extends Seeder
 {
     /**
      * Let most students attempt the example exercise through the real grader, then top up their stars
-     * and award the matching badges, so the teacher's progress overview has something to show.
+     * (which awards the matching badges), so the teacher's progress overview has something to show.
      */
     public function run(AttemptGrader $grader): void
     {
         $exercise = Exercise::query()->with('errors')->firstOrFail();
-        $badges = Badge::query()->get();
 
-        Student::query()->inRandomOrder()->limit(20)->get()->each(function (Student $student) use ($grader, $exercise, $badges): void {
+        Student::query()->inRandomOrder()->limit(20)->get()->each(function (Student $student) use ($grader, $exercise): void {
             $grader->grade($student, $exercise, CodeSide::Wrong, $this->selectLines($exercise));
 
             // After an imperfect first attempt: try again, give up, or leave it for a retry later.
@@ -35,11 +33,6 @@ class DemoProgressSeeder extends Seeder
 
             // Stars from exercises the demo does not have yet, so some students reach a badge.
             $student->increment('stars', fake()->numberBetween(0, 40));
-
-            $student->badges()->attach(
-                $badges->where('threshold', '<=', $student->stars)->pluck('id'),
-                ['awarded_at' => now()],
-            );
         });
     }
 

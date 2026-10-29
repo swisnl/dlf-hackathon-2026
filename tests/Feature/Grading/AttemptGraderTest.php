@@ -11,6 +11,7 @@ use App\Models\Exercise;
 use App\Models\ExerciseError;
 use App\Models\Progress;
 use App\Models\User;
+use Database\Seeders\BadgeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -111,6 +112,16 @@ class AttemptGraderTest extends TestCase
         $attempt = $this->grader->grade($this->student, $this->exercise, CodeSide::Wrong, [4]);
 
         $this->assertSame(1, $attempt->number);
+    }
+
+    public function test_reaching_a_threshold_through_an_attempt_awards_the_badge(): void
+    {
+        $this->seed(BadgeSeeder::class);
+        $this->student->update(['stars' => 3]);
+
+        $this->grader->grade($this->student, $this->exercise, CodeSide::Wrong, [4, 8]);
+
+        $this->assertSame(['Nieuwsgierig'], $this->student->badges()->pluck('name')->all());
     }
 
     private function assertProgress(ProgressStatus $status, int $bestStars, bool $completed): void

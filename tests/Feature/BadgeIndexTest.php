@@ -27,9 +27,10 @@ class BadgeIndexTest extends TestCase
 
     public function test_all_badges_are_shown_in_order_with_the_students_award_dates(): void
     {
-        $student = User::factory()->create(['stars' => 23]);
-        $student->badges()->attach(Badge::query()->where('name', 'Nieuwsgierig')->value('id'), ['awarded_at' => '2026-10-02 14:00:00']);
-        $student->badges()->attach(Badge::query()->where('name', 'Speurder')->value('id'), ['awarded_at' => '2026-10-16 09:30:00']);
+        $this->travelTo('2026-10-02 14:00:00');
+        $student = User::factory()->create(['stars' => 5]);
+        $this->travelTo('2026-10-16 09:30:00');
+        $student->increment('stars', 18);
 
         $this->actingAs($student)
             ->get('/badges')

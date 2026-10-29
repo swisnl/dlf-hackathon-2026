@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Enums\ProgressStatus;
-use App\Models\Badge;
 use App\Models\Exercise;
 use App\Models\Progress;
 use App\Models\User;
@@ -46,7 +45,6 @@ class DashboardTest extends TestCase
     public function test_the_next_badge_and_earned_badges_follow_the_student(): void
     {
         $student = User::factory()->create(['stars' => 23]);
-        $student->badges()->attach(Badge::query()->where('threshold', '<=', 23)->pluck('id'), ['awarded_at' => now()]);
 
         $this->actingAs($student)
             ->get('/')
