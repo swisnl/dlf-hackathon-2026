@@ -7,6 +7,7 @@ use App\Http\Controllers\ExerciseMessageController;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubmissionController;
+use App\Http\Controllers\WijsjeController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function (): void {
@@ -22,6 +23,8 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('exercises/{exercise}', [ExerciseController::class, 'show'])->name('exercises.show');
     Route::post('exercises/{exercise}/answer', [ExerciseController::class, 'answer'])->name('exercises.answer')->middleware('throttle:ai');
     Route::post('exercises/{exercise}/messages', [ExerciseMessageController::class, 'store'])->name('exercises.messages.store')->middleware('throttle:ai');
+
+    Route::post('wijsje', WijsjeController::class)->name('wijsje')->middleware('throttle:ai');
 });
 
 // Not behind "verified", so a student can still fix a mistyped new email address.
