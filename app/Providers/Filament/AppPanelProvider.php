@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Enums\UserRole;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Models\User;
 use Awcodes\Gravatar\GravatarPlugin;
@@ -39,19 +38,20 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use pxlrbt\FilamentEnvironmentIndicator\EnvironmentIndicatorPlugin;
 use Swis\Filament\Backgrounds\FilamentBackgroundsPlugin;
 
-class AdminPanelProvider extends PanelProvider
+class AppPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
         return $panel
             ->default()
-            ->id('admin')
-            ->path('admin')
+            ->id('app')
+            ->path('')
             ->unsavedChangesAlerts()
             ->defaultAvatarProvider(GravatarProvider::class)
             ->spa()
-            ->viteTheme('resources/css/filament/admin/theme.css')
+            ->viteTheme('resources/css/filament/app/theme.css')
             ->login()
+            ->registration()
             ->passwordReset()
             ->maxContentWidth('full')
             ->sidebarWidth('fit-content')
@@ -103,7 +103,7 @@ class AdminPanelProvider extends PanelProvider
                 FilamentDeveloperLoginsPlugin::make()
                     ->enabled(app()->environment('local'))
                     ->switchable(false)
-                    ->users(fn () => User::query()->where('role', UserRole::Admin)->pluck('email', 'name')->toArray()),
+                    ->users(fn () => User::query()->pluck('email', 'name')->toArray()),
                 GravatarPlugin::make(),
                 LightSwitchPlugin::make(),
                 StickySaveBarPlugin::make()

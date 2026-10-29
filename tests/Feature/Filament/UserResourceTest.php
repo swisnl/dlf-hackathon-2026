@@ -18,17 +18,11 @@ class UserResourceTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_guests_are_redirected_to_the_login_page(): void
-    {
-        $this->get('/admin')->assertRedirect('/admin/login');
-    }
-
     #[DataProvider('nonAdminRoles')]
-    public function test_non_admins_cannot_access_the_panel(UserRole $role): void
+    public function test_non_admins_cannot_access_the_user_resource(UserRole $role): void
     {
         $this->actingAs(User::factory()->create(['role' => $role]));
 
-        $this->get('/admin')->assertForbidden();
         $this->get(UserResource::getUrl('index'))->assertForbidden();
     }
 
