@@ -46,7 +46,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
                 </p>
             </div>
 
-            <PrimaryButton :href="nextExerciseId ? `/exercises/${nextExerciseId}` : '/oefeningen'">Start een oefening</PrimaryButton>
+            <PrimaryButton :href="nextExerciseId ? `/exercises/${nextExerciseId}` : '/exercises'">Start een oefening</PrimaryButton>
         </div>
 
         <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
@@ -111,7 +111,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
             <section class="flex min-w-0 flex-[999_1_560px] flex-col gap-3.5">
                 <div class="flex items-baseline justify-between">
                     <h2 class="font-display text-[26px] font-extrabold">Verder oefenen</h2>
-                    <Link href="/oefeningen" class="font-semibold text-purple-700 hover:text-purple-800">Alle oefeningen</Link>
+                    <Link href="/exercises" class="font-semibold text-purple-700 hover:text-purple-800">Alle oefeningen</Link>
                 </div>
 
                 <Link

@@ -13,7 +13,7 @@ const user = computed(() => page.props.auth.user)
 
 const menu = [
     { label: 'Dashboard', href: '/' },
-    { label: 'Oefeningen', href: '/oefeningen' },
+    { label: 'Oefeningen', href: '/exercises' },
     { label: 'Badges', href: '/badges' },
     { label: 'Mijn code', href: '/submissions' },
 ]
@@ -21,14 +21,14 @@ const menu = [
 // An exercise about the student's own code lives under "Mijn code", a published one under "Oefeningen".
 const section = computed(() => {
     if (page.component === 'Exercises/Show') {
-        return page.props.exercise.submission ? '/submissions' : '/oefeningen'
+        return page.props.exercise.submission ? '/submissions' : '/exercises'
     }
 
     return page.url
 })
 
 const isActive = href => (href === '/' ? section.value === '/' : section.value.startsWith(href))
-const onProfile = computed(() => isActive('/profiel'))
+const onProfile = computed(() => isActive('/profile'))
 </script>
 
 <template>
@@ -62,7 +62,7 @@ const onProfile = computed(() => isActive('/profiel'))
                 </span>
 
                 <Link
-                    href="/profiel"
+                    href="/profile"
                     :aria-current="onProfile ? 'page' : undefined"
                     :aria-label="`Profiel van ${user.name}`"
                     class="flex size-11 items-center justify-center rounded-full font-bold text-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-purple-600"

@@ -22,7 +22,7 @@ const filterUrl = changes => {
     const params = new URLSearchParams(Object.entries({ ...props.filters, ...changes }).filter(([, value]) => value))
     const query = params.toString()
 
-    return query ? `/oefeningen?${query}` : '/oefeningen'
+    return query ? `/exercises?${query}` : '/exercises'
 }
 
 const filterStatus = event => router.visit(filterUrl({ status: event.target.value }), visitOptions)
@@ -103,7 +103,7 @@ const actions = {
 
         <p v-else class="rounded-[20px] border border-line-soft bg-white p-[22px] text-ink-muted">
             Geen oefeningen gevonden met deze filters.
-            <Link href="/oefeningen" class="font-semibold text-purple-700 hover:text-purple-800">Toon alle oefeningen</Link>
+            <Link href="/exercises" class="font-semibold text-purple-700 hover:text-purple-800">Toon alle oefeningen</Link>
         </p>
     </AppLayout>
 </template>

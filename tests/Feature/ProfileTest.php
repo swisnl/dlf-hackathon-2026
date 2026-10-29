@@ -18,7 +18,7 @@ class ProfileTest extends TestCase
 
     public function test_guests_are_redirected_to_the_login_page(): void
     {
-        $this->get('/profiel')->assertRedirect('/login');
+        $this->get('/profile')->assertRedirect('/login');
     }
 
     public function test_the_profile_card_shows_the_students_details(): void
@@ -34,7 +34,7 @@ class ProfileTest extends TestCase
         Badge::factory()->create(['name' => 'Kenner', 'threshold' => 30]);
 
         $this->actingAs($user)
-            ->get('/profiel')
+            ->get('/profile')
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Profile/Edit')
@@ -52,7 +52,7 @@ class ProfileTest extends TestCase
     public function test_the_highest_badge_is_empty_without_badges(): void
     {
         $this->actingAs(User::factory()->create())
-            ->get('/profiel')
+            ->get('/profile')
             ->assertInertia(fn (AssertableInertia $page) => $page->where('profile.highestBadge', null));
     }
 
@@ -62,10 +62,10 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->from('/profiel')
-            ->patch('/profiel', ['name' => 'Daan de Vries', 'email' => $user->email])
+            ->from('/profile')
+            ->patch('/profile', ['name' => 'Daan de Vries', 'email' => $user->email])
             ->assertSessionHasNoErrors()
-            ->assertRedirect('/profiel');
+            ->assertRedirect('/profile');
 
         $user->refresh();
         $this->assertSame('Daan de Vries', $user->name);
@@ -79,7 +79,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->patch('/profiel', ['name' => $user->name, 'email' => 'nieuw@student.school.nl'])
+            ->patch('/profile', ['name' => $user->name, 'email' => 'nieuw@student.school.nl'])
             ->assertSessionHasNoErrors();
 
         $user->refresh();
@@ -91,7 +91,7 @@ class ProfileTest extends TestCase
     public function test_an_unverified_student_can_still_reach_the_profile(): void
     {
         $this->actingAs(User::factory()->unverified()->create())
-            ->get('/profiel')
+            ->get('/profile')
             ->assertOk();
     }
 
@@ -101,7 +101,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->patch('/profiel', ['name' => $user->name, 'email' => 'bezet@student.school.nl'])
+            ->patch('/profile', ['name' => $user->name, 'email' => 'bezet@student.school.nl'])
             ->assertSessionHasErrors('email');
     }
 
@@ -110,7 +110,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->put('/profiel/wachtwoord', [
+            ->put('/profile/password', [
                 'current_password' => 'password',
                 'password' => 'nieuw-wachtwoord',
                 'password_confirmation' => 'nieuw-wachtwoord',
@@ -125,7 +125,7 @@ class ProfileTest extends TestCase
         $user = User::factory()->create();
 
         $this->actingAs($user)
-            ->put('/profiel/wachtwoord', [
+            ->put('/profile/password', [
                 'current_password' => 'fout',
                 'password' => 'nieuw-wachtwoord',
                 'password_confirmation' => 'nieuw-wachtwoord',

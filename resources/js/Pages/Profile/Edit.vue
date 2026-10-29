@@ -22,11 +22,11 @@ const password = useForm({
     password_confirmation: '',
 })
 
-const saveDetails = () => details.patch('/profiel', {
+const saveDetails = () => details.patch('/profile', {
     preserveScroll: true,
 })
 
-const changePassword = () => password.put('/profiel/wachtwoord', {
+const changePassword = () => password.put('/profile/password', {
     preserveScroll: true,
     onFinish: () => password.reset(),
 })

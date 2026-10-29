@@ -16,7 +16,7 @@ class ExerciseIndexTest extends TestCase
 
     public function test_guests_are_redirected_to_the_login_page(): void
     {
-        $this->get('/oefeningen')->assertRedirect('/login');
+        $this->get('/exercises')->assertRedirect('/login');
     }
 
     public function test_only_published_exercises_are_shown_with_the_students_status_and_stars(): void
@@ -31,7 +31,7 @@ class ExerciseIndexTest extends TestCase
         Progress::factory()->done()->create(['exercise_id' => $new->id]);
 
         $this->actingAs($student)
-            ->get('/oefeningen')
+            ->get('/exercises')
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Exercises/Index')
@@ -56,7 +56,7 @@ class ExerciseIndexTest extends TestCase
         Exercise::factory()->for($routes)->create();
 
         $this->actingAs(User::factory()->create())
-            ->get('/oefeningen?topic=Eloquent')
+            ->get('/exercises?topic=Eloquent')
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('topics', ['Eloquent', 'Routes'])
                 ->where('filters.topic', 'Eloquent')
@@ -72,7 +72,7 @@ class ExerciseIndexTest extends TestCase
         Progress::factory()->done()->create(['user_id' => $student->id]);
 
         $this->actingAs($student)
-            ->get('/oefeningen?status=retry')
+            ->get('/exercises?status=retry')
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('filters.status', 'retry')
                 ->has('exercises', 1)
@@ -84,7 +84,7 @@ class ExerciseIndexTest extends TestCase
         Exercise::factory()->count(2)->create();
 
         $this->actingAs(User::factory()->create())
-            ->get('/oefeningen?status=bogus')
+            ->get('/exercises?status=bogus')
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('filters.status', null)
                 ->has('exercises', 2));
