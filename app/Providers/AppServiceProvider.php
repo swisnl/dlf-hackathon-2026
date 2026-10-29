@@ -3,13 +3,16 @@
 namespace App\Providers;
 
 use App\Ai\ClaudeCode\ClaudeCodeProvider;
+use App\Session\DatabaseSessionHandler;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Database\DatabaseManager;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Ai\AiManager;
 
