@@ -10,7 +10,6 @@
     "license": "proprietary",
     "require": {
         "php": "^8.4",
-        "awcodes/filament-gravatar": "^4.2",
         "awcodes/light-switch": "^3.2",
         "bepsvpt/secure-headers": "^9.1",
         "cocosmos/filament-sticky-save-bar": "^1.1",

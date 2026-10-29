@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8b3c1a35fbcfe78df61e6311a187f979",
+    "content-hash": "9d2d55d3dc12a098fa2a503f9a7e563f",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -71,81 +71,6 @@
             },
             "time": "2026-09-13T06:25:37+00:00",
             "published-time": "2026-09-13T06:26:57+00:00"
-        },
-        {
-            "name": "awcodes/filament-gravatar",
-            "version": "v4.2.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/awcodes/filament-gravatar.git",
-                "reference": "ef4dc7b7ec84a77e5d42dfc1452b208369b2bcf4"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/awcodes/filament-gravatar/zipball/ef4dc7b7ec84a77e5d42dfc1452b208369b2bcf4",
-                "reference": "ef4dc7b7ec84a77e5d42dfc1452b208369b2bcf4",
-                "shasum": ""
-            },
-            "require": {
-                "filament/filament": "^4.0|^5.0",
-                "php": "^8.2",
-                "spatie/laravel-package-tools": "^1.15"
-            },
-            "require-dev": {
-                "larastan/larastan": "^3.0",
-                "laravel/pint": "^1.0",
-                "orchestra/testbench": "^9.0|^10.0|^11.0",
-                "pestphp/pest": "^3.0|^4.0",
-                "pestphp/pest-plugin-arch": "^3.0|^4.0",
-                "pestphp/pest-plugin-laravel": "^3.0|^4.0",
-                "pestphp/pest-plugin-livewire": "^3.0|^4.0",
-                "rector/rector": "^2.0",
-                "spatie/laravel-ray": "^1.26"
-            },
-            "type": "package",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Awcodes\\Gravatar\\GravatarServiceProvider"
-                    ]
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Awcodes\\Gravatar\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Adam Weston",
-                    "email": "awcodes1@gmail.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Replace Filament's default avatar url provider with one for Gravatar.",
-            "keywords": [
-                "awcodes",
-                "filament",
-                "gravatar",
-                "laravel",
-                "plugin"
-            ],
-            "support": {
-                "issues": "https://github.com/awcodes/filament-gravatar/issues",
-                "source": "https://github.com/awcodes/filament-gravatar/tree/v4.2.1"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/awcodes",
-                    "type": "github"
-                }
-            ],
-            "time": "2026-08-31T15:34:24+00:00",
-            "published-time": "2026-08-31T15:36:38+00:00"
         },
         {
             "name": "awcodes/light-switch",
