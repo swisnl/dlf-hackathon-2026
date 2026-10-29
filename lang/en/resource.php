@@ -16,6 +16,38 @@ return [
         'plural' => 'Attempts',
         'singular' => 'Attempt',
     ],
+    'exercise' => [
+        'actions' => [
+            'close' => 'Close',
+            'preview' => 'Preview',
+        ],
+        'fields' => [
+            'attempts_count' => 'Attempts',
+            'correct_code' => 'Correct class',
+            'error_title' => 'Error title',
+            'errors' => 'Errors',
+            'explanation' => 'Explanation',
+            'hint' => 'Hint',
+            'line' => 'Line',
+            'published' => 'Published',
+            'stars' => 'Stars',
+            'title' => 'Title',
+            'topic' => 'Topic',
+            'wrong_code' => 'Wrong class',
+        ],
+        'helpers' => [
+            'line' => 'Line number in the wrong class.',
+            'published' => 'Off = draft, students cannot see the exercise yet.',
+        ],
+        'plural' => 'Exercises',
+        'singular' => 'Exercise',
+        'warnings' => [
+            'attempted' => [
+                'description' => 'Students have already made this exercise. If you change the code or the errors, their earlier attempts may no longer match.',
+                'heading' => 'This exercise has already been made',
+            ],
+        ],
+    ],
     'fields' => [
         'created_at' => 'Created at',
         'deleted_at' => 'Deleted at',
