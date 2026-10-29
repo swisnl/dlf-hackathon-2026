@@ -3,11 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CodeSide;
+use App\Enums\ProgressStatus;
 use App\Enums\Variant;
 use App\Exceptions\ExerciseAlreadyAnswered;
+use App\Http\Resources\StudentExerciseResource;
 use App\Models\Exercise;
 use App\Models\Submission;
+use App\Models\Topic;
 use App\Services\ExerciseService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -18,6 +22,38 @@ use Throwable;
 
 class ExerciseController extends Controller
 {
+    public function index(Request $request): Response
+    {
+        $user = $this->user($request);
+
+        $topic = $request->string('topic')->toString() ?: null;
+        $status = $request->enum('status', ProgressStatus::class);
+
+        $exercises = Exercise::query()
+            ->published()
+            ->withProgressOf($user)
+            ->with('topic')
+            ->when($topic, fn (Builder $query) => $query->whereRelation('topic', 'name', $topic))
+            ->orderBy('published_at')
+            ->orderBy('id')
+            ->get()
+            // The status comes from the student's progress, so it is filtered after loading.
+            ->when($status, fn ($exercises) => $exercises->filter(fn (Exercise $exercise): bool => $exercise->statusOfStudent() === $status));
+
+        return Inertia::render('Exercises/Index', [
+            'topics' => Topic::query()->orderBy('id')->pluck('name'),
+            'statuses' => collect(ProgressStatus::cases())->map(fn (ProgressStatus $status): array => [
+                'value' => $status->value,
+                'label' => $status->getLabel(),
+            ]),
+            'filters' => [
+                'topic' => $topic,
+                'status' => $status?->value,
+            ],
+            'exercises' => StudentExerciseResource::collection($exercises->values())->resolve(),
+        ]);
+    }
+
     public function store(Submission $submission, ExerciseService $exercises): RedirectResponse
     {
         Gate::authorize('view', $submission);

@@ -19,8 +19,7 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request): Response
     {
-        /** @var \App\Models\User $user */
-        $user = $request->user();
+        $user = $this->user($request);
 
         $badges = Badge::query()->orderBy('threshold')->get();
         $earnedBadgeIds = $user->badges()->pluck('badges.id');

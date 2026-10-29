@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Enums\CodeSide;
+use App\Enums\ProgressStatus;
 use App\Enums\Variant;
 use Database\Factories\ExerciseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -81,6 +84,44 @@ class Exercise extends Model
         return $this->errors
             ->map(fn (ExerciseError $error): string => "Regel {$error->line} van de foute versie, {$error->title}: {$error->explanation}")
             ->implode("\n");
+    }
+
+    /**
+     * Only exercises that students can see.
+     *
+     * @param Builder<$this> $query
+     */
+    #[Scope]
+    protected function published(Builder $query): void
+    {
+        $query->whereNotNull('published_at');
+    }
+
+    /**
+     * Load only the given student's progress, so progressOfStudent() and statusOfStudent() can use it.
+     *
+     * @param Builder<$this> $query
+     */
+    #[Scope]
+    protected function withProgressOf(Builder $query, User $user): void
+    {
+        $query->with(['progress' => fn (HasMany $query) => $query->whereBelongsTo($user)]);
+    }
+
+    /**
+     * The student's progress, loaded through withProgressOf().
+     */
+    public function progressOfStudent(): ?Progress
+    {
+        return $this->progress->first();
+    }
+
+    /**
+     * The student's status, loaded through withProgressOf(); no progress yet means it is new.
+     */
+    public function statusOfStudent(): ProgressStatus
+    {
+        return $this->progressOfStudent()->status ?? ProgressStatus::New;
     }
 
     /**

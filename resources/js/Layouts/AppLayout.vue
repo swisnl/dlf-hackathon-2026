@@ -15,6 +15,7 @@ const menu = [
     { label: 'Dashboard', href: '/' },
     { label: 'Oefeningen', href: '/oefeningen' },
     { label: 'Badges', href: '/badges' },
+    { label: 'Mijn code', href: '/submissions' },
 ]
 
 const isActive = href => (href === '/' ? page.url === '/' : page.url.startsWith(href))

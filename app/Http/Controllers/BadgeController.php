@@ -12,8 +12,7 @@ class BadgeController extends Controller
 {
     public function index(Request $request): Response
     {
-        /** @var \App\Models\User $user */
-        $user = $request->user();
+        $user = $this->user($request);
 
         $awarded = BadgeUser::query()
             ->whereBelongsTo($user)

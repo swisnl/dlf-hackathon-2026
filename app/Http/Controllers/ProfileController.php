@@ -12,8 +12,7 @@ class ProfileController extends Controller
 {
     public function edit(Request $request): Response
     {
-        /** @var \App\Models\User $user */
-        $user = $request->user();
+        $user = $this->user($request);
 
         return Inertia::render('Profile/Edit', [
             'profile' => [
@@ -29,8 +28,7 @@ class ProfileController extends Controller
 
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        /** @var \App\Models\User $user */
-        $user = $request->user();
+        $user = $this->user($request);
 
         $user->fill($request->validated());
 

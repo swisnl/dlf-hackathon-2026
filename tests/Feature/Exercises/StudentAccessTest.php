@@ -38,7 +38,7 @@ class StudentAccessTest extends TestCase
         $this->post('/login', ['email' => $student->email, 'password' => 'password'])
             ->assertRedirect(route('dashboard'));
 
-        $this->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page->component('Home')
+        $this->get(route('dashboard'))->assertInertia(fn (Assert $page) => $page->component('Dashboard')
             ->where('auth.user.name', 'Sam de Vries'));
     }
 }

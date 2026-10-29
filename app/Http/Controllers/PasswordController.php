@@ -9,8 +9,7 @@ class PasswordController extends Controller
 {
     public function update(PasswordUpdateRequest $request): RedirectResponse
     {
-        /** @var \App\Models\User $user */
-        $user = $request->user();
+        $user = $this->user($request);
 
         $user->update([
             'password' => $request->string('password')->value(),
