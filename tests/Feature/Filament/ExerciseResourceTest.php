@@ -139,6 +139,15 @@ class ExerciseResourceTest extends TestCase
             ->assertMountedActionModalSee(['Verkeerde relatie', 'class Post extends Model']);
     }
 
+    public function test_leaving_the_page_with_the_preview_open_does_not_warn_about_unsaved_changes(): void
+    {
+        $exercise = Exercise::factory()->create();
+
+        Livewire::test(EditExercise::class, ['record' => $exercise->getRouteKey()])
+            ->mountAction('preview')
+            ->assertSet('mountedActions.0.hasUnsavedChangesAlert', false);
+    }
+
     /**
      * @return array<string, mixed>
      */

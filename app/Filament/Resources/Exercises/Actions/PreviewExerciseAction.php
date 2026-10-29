@@ -32,6 +32,8 @@ class PreviewExerciseAction extends Action
             'exercise' => $record->load('errors'),
         ]));
         $this->modalSubmitAction(false);
+        // Read-only: leaving the page with the preview open loses nothing.
+        $this->unsavedChangesAlert(false);
         $this->modalCancelActionLabel(__('resource.exercise.actions.close'));
     }
 }
