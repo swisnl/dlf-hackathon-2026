@@ -26,7 +26,7 @@ defineEmits(['toggle'])
                 @click="interactive && $emit('toggle', index + 1)"
             >
                 <span class="sr-only">Regel {{ index + 1 }}{{ !interactive && selected.includes(index + 1) ? ', aangeklikt' : '' }}: </span>
-                <span class="w-[22px] shrink-0 text-right text-[#8A8499] select-none" aria-hidden="true">{{ index + 1 }}</span>
+                <span class="w-[22px] shrink-0 text-right text-[#676272] select-none" aria-hidden="true">{{ index + 1 }}</span>
                 <span><span v-for="(piece, pieceIndex) in pieces" :key="pieceIndex" :style="{ color: piece.color }">{{ piece.text }}</span></span>
             </component>
         </div>

@@ -8,7 +8,7 @@
     "tokenColors": [
         {
             "scope": "comment",
-            "settings": { "foreground": "#6b6680" }
+            "settings": { "foreground": "#66617a" }
         },
         {
             "scope": ["keyword.control", "keyword.other", "storage", "constant.language"],
@@ -20,11 +20,11 @@
         },
         {
             "scope": "variable",
-            "settings": { "foreground": "#c2410c" }
+            "settings": { "foreground": "#b23b0b" }
         },
         {
             "scope": "string",
-            "settings": { "foreground": "#0b7a75" }
+            "settings": { "foreground": "#0a706b" }
         }
     ]
 }
