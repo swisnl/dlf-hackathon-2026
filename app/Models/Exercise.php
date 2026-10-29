@@ -58,7 +58,34 @@ class Exercise extends Model
      */
     public function correctVariant(): Variant
     {
-        return ord(hash_hmac('sha256', (string) $this->id, config()->string('app.key'), true)[0]) % 2 === 0 ? Variant::A : Variant::B;
+        return self::unguessableVariant((string) $this->id);
+    }
+
+    /**
+     * Which variant shows the correct code for this student. A teacher's exercise is made by many students,
+     * so the order also depends on the student: the wrong class is not always on the same side.
+     */
+    public function correctVariantFor(User $student): Variant
+    {
+        return self::unguessableVariant("{$this->id}:{$student->id}");
+    }
+
+    public function sideFor(User $student, Variant $variant): CodeSide
+    {
+        return $variant === $this->correctVariantFor($student) ? CodeSide::Correct : CodeSide::Wrong;
+    }
+
+    public function codeFor(User $student, Variant $variant): string
+    {
+        return $this->sideFor($student, $variant) === CodeSide::Correct ? $this->correct_code : $this->wrong_code;
+    }
+
+    /**
+     * Stable for the same seed, but not guessable without the app key.
+     */
+    private static function unguessableVariant(string $seed): Variant
+    {
+        return ord(hash_hmac('sha256', $seed, config()->string('app.key'), true)[0]) % 2 === 0 ? Variant::A : Variant::B;
     }
 
     public function side(Variant $variant): CodeSide

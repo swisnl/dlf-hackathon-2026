@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\AttemptController;
 use App\Http\Controllers\BadgeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\ExerciseMessageController;
 use App\Http\Controllers\PasswordController;
+use App\Http\Controllers\PracticeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SubmissionController;
 use Illuminate\Support\Facades\Route;
@@ -12,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('oefeningen', [ExerciseController::class, 'index'])->name('exercises.index');
+    Route::get('oefeningen/{exercise}', [PracticeController::class, 'show'])->name('exercises.practice');
+    Route::post('oefeningen/{exercise}/pogingen', [AttemptController::class, 'store'])->name('exercises.attempts.store');
     Route::get('badges', [BadgeController::class, 'index'])->name('badges.index');
 
     Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');

@@ -8,7 +8,7 @@ use Illuminate\Auth\Access\Response;
 
 /**
  * Teachers and admins create, change and publish exercises in the backoffice.
- * Students see and answer the exercises the AI made about their own code.
+ * Students practice the published exercises and see and answer the exercises the AI made about their own code.
  */
 final class ExercisePolicy
 {
@@ -69,6 +69,16 @@ final class ExercisePolicy
         return $exercise->attempts()->whereBelongsTo($user)->exists()
             ? Response::deny('Deze oefening heb je al beantwoord.')
             : Response::allow();
+    }
+
+    /**
+     * Every student practices the published exercises the teachers made.
+     */
+    public function practice(User $user, Exercise $exercise): Response
+    {
+        return $exercise->published_at !== null && $exercise->submission_id === null
+            ? Response::allow()
+            : Response::denyAsNotFound();
     }
 
     public function discuss(User $user, Exercise $exercise): Response

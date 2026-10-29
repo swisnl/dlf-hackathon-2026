@@ -13,7 +13,7 @@ final readonly class Grade
     /**
      * The highest attempt number; the last attempt earns at most half of the stars.
      */
-    private const int MAX_ATTEMPTS = 2;
+    public const int MAX_ATTEMPTS = 2;
 
     /**
      * @param list<int> $selectedLines the clicked lines, each once and in order
