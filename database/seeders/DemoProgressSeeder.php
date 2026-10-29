@@ -2,45 +2,39 @@
 
 namespace Database\Seeders;
 
+use App\Enums\CodeSide;
 use App\Enums\ProgressStatus;
-use App\Models\Attempt;
+use App\Grading\AttemptGrader;
 use App\Models\Badge;
 use App\Models\Exercise;
-use App\Models\ExerciseError;
-use App\Models\Progress;
 use App\Models\Student;
 use Illuminate\Database\Seeder;
 
 class DemoProgressSeeder extends Seeder
 {
     /**
-     * Give most students attempts on the example exercise, stars and the badges that go with them,
-     * so the teacher's progress overview has something to show.
+     * Let most students attempt the example exercise through the real grader, then top up their stars
+     * and award the matching badges, so the teacher's progress overview has something to show.
      */
-    public function run(): void
+    public function run(AttemptGrader $grader): void
     {
         $exercise = Exercise::query()->with('errors')->firstOrFail();
-        $errorLines = $exercise->errors->map(fn (ExerciseError $error): int => $error->line)->all();
         $badges = Badge::query()->get();
 
-        Student::query()->inRandomOrder()->limit(20)->get()->each(function (Student $student) use ($exercise, $errorLines, $badges): void {
-            $first = $this->attempt($student, $exercise, $errorLines, 1);
-            $best = $first;
+        Student::query()->inRandomOrder()->limit(20)->get()->each(function (Student $student) use ($grader, $exercise, $badges): void {
+            $grader->grade($student, $exercise, CodeSide::Wrong, $this->selectLines($exercise));
 
-            if ($first->found < count($errorLines)) {
-                $best = $this->attempt($student, $exercise, $errorLines, 2);
+            // After an imperfect first attempt: try again, give up, or leave it for a retry later.
+            if ($student->progress()->where('exercise_id', $exercise->id)->sole()->status === ProgressStatus::Retry) {
+                match (fake()->numberBetween(1, 3)) {
+                    1 => $grader->grade($student, $exercise, CodeSide::Wrong, $this->selectLines($exercise)),
+                    2 => $grader->giveUp($student, $exercise),
+                    default => null,
+                };
             }
 
-            Progress::factory()->create([
-                'exercise_id' => $exercise->id,
-                'user_id' => $student->id,
-                'status' => $best->found === count($errorLines) ? ProgressStatus::Done : ProgressStatus::Retry,
-                'best_stars' => $best->stars,
-                'completed_at' => $best->found === count($errorLines) ? $best->created_at : null,
-            ]);
-
             // Stars from exercises the demo does not have yet, so some students reach a badge.
-            $student->update(['stars' => $best->stars + fake()->numberBetween(0, 40)]);
+            $student->increment('stars', fake()->numberBetween(0, 40));
 
             $student->badges()->attach(
                 $badges->where('threshold', '<=', $student->stars)->pluck('id'),
@@ -50,23 +44,18 @@ class DemoProgressSeeder extends Seeder
     }
 
     /**
-     * @param array<int, int> $errorLines
+     * Some of the error lines plus up to two lines that are not an error.
+     *
+     * @return array<int, int>
      */
-    private function attempt(Student $student, Exercise $exercise, array $errorLines, int $number): Attempt
+    private function selectLines(Exercise $exercise): array
     {
-        $found = fake()->randomElements($errorLines, fake()->numberBetween(0, count($errorLines)));
-        $wrong = fake()->randomElements(array_diff(range(1, 22), $errorLines), fake()->numberBetween(0, 2));
-        $selectedLines = [...$found, ...$wrong];
-        sort($selectedLines);
+        $errorLines = collect($exercise->errorLines());
+        $otherLines = collect(range(1, count(explode("\n", $exercise->wrong_code))))->reject(fn (int $line): bool => $errorLines->contains($line));
 
-        return Attempt::factory()->create([
-            'user_id' => $student->id,
-            'exercise_id' => $exercise->id,
-            'number' => $number,
-            'selected_lines' => $selectedLines,
-            'found' => count($found),
-            'wrong' => count($wrong),
-            'stars' => max(0, count($found) - count($wrong)),
-        ]);
+        return $errorLines->random(fake()->numberBetween(0, $errorLines->count()))
+            ->merge($otherLines->random(fake()->numberBetween(0, 2)))
+            ->values()
+            ->all();
     }
 }
