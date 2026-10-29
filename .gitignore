@@ -19,8 +19,12 @@
 /auth.json
 /node_modules
 /public_html/build
+/public_html/css/*
+/public_html/fonts/*
 /public_html/fonts-manifest.dev.json
 /public_html/hot
+/public_html/images/*
+/public_html/js/*
 /public_html/storage
 /public_html/vendor
 /storage/*.key
