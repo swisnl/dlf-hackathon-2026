@@ -9,5 +9,6 @@ return [
     'user_role' => [
         'admin' => 'Beheerder',
         'student' => 'Student',
+        'teacher' => 'Docent',
     ],
 ];
