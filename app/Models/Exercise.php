@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CodeSide;
+use App\Enums\ExerciseSource;
 use App\Enums\ProgressStatus;
 use App\Enums\Variant;
 use Database\Factories\ExerciseFactory;
@@ -96,6 +97,17 @@ class Exercise extends Model
     {
         $query->whereNotNull('published_at')
             ->where(fn (Builder $query) => $query->whereNull('submission_id')->orWhereRelation('submission', 'user_id', $user->id));
+    }
+
+    /**
+     * Only the exercises a teacher made, or only those the AI made.
+     *
+     * @param Builder<$this> $query
+     */
+    #[Scope]
+    protected function fromSource(Builder $query, ExerciseSource $source): void
+    {
+        $source === ExerciseSource::Ai ? $query->whereNotNull('submission_id') : $query->whereNull('submission_id');
     }
 
     /**

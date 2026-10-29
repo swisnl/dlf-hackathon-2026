@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\CodeSide;
+use App\Enums\ExerciseSource;
 use App\Enums\ProgressStatus;
 use App\Enums\Variant;
 use App\Exceptions\ExerciseAlreadyAnswered;
@@ -29,12 +30,14 @@ class ExerciseController extends Controller
 
         $topic = $request->string('topic')->toString() ?: null;
         $status = $request->enum('status', ProgressStatus::class);
+        $source = $request->enum('source', ExerciseSource::class);
 
         $exercises = Exercise::query()
             ->visibleTo($user)
             ->withProgressOf($user)
             ->with('topic')
             ->when($topic, fn (Builder $query) => $query->whereRelation('topic', 'name', $topic))
+            ->when($source, fn (Builder $query, ExerciseSource $source) => $query->fromSource($source))
             ->orderBy('published_at')
             ->orderBy('id')
             ->get()
@@ -47,9 +50,14 @@ class ExerciseController extends Controller
                 'value' => $status->value,
                 'label' => $status->getLabel(),
             ]),
+            'sources' => collect(ExerciseSource::cases())->map(fn (ExerciseSource $source): array => [
+                'value' => $source->value,
+                'label' => $source->getLabel(),
+            ]),
             'filters' => [
                 'topic' => $topic,
                 'status' => $status?->value,
+                'source' => $source?->value,
             ],
             'exercises' => StudentExerciseResource::collection($exercises->values())->resolve(),
         ]);

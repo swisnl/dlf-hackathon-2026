@@ -46,7 +46,7 @@ class ExerciseIndexTest extends TestCase
                 ->where('exercises.2.id', $done->id)
                 ->where('exercises.2.status', 'done')
                 ->where('exercises.2.bestStars', 2)
-                ->where('filters', ['topic' => null, 'status' => null]));
+                ->where('filters', ['topic' => null, 'status' => null, 'source' => null]));
     }
 
     public function test_a_student_only_sees_the_ai_exercises_about_their_own_code(): void
@@ -97,14 +97,32 @@ class ExerciseIndexTest extends TestCase
                 ->where('exercises.0.id', $retry->exercise_id));
     }
 
-    public function test_an_unknown_status_is_ignored(): void
+    public function test_exercises_can_be_filtered_by_who_made_them(): void
+    {
+        $student = User::factory()->create();
+        $teacher = Exercise::factory()->create();
+        $ai = Exercise::factory()->forSubmission(Submission::factory()->for($student)->create())->create();
+
+        foreach (['ai' => $ai, 'teacher' => $teacher] as $source => $exercise) {
+            $this->actingAs($student)
+                ->get("/exercises?source={$source}")
+                ->assertInertia(fn (AssertableInertia $page) => $page
+                    ->where('filters.source', $source)
+                    ->has('sources', 2)
+                    ->has('exercises', 1)
+                    ->where('exercises.0.id', $exercise->id));
+        }
+    }
+
+    public function test_an_unknown_status_or_source_is_ignored(): void
     {
         Exercise::factory()->count(2)->create();
 
         $this->actingAs(User::factory()->create())
-            ->get('/exercises?status=bogus')
+            ->get('/exercises?status=bogus&source=bogus')
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('filters.status', null)
+                ->where('filters.source', null)
                 ->has('exercises', 2));
     }
 }

@@ -10,6 +10,7 @@ import TopicChip from '@/Components/TopicChip.vue'
 const props = defineProps({
     topics: { type: Array, required: true },
     statuses: { type: Array, required: true },
+    sources: { type: Array, required: true },
     filters: { type: Object, required: true },
     exercises: { type: Array, required: true },
 })
@@ -26,7 +27,7 @@ const filterUrl = changes => {
     return query ? `/exercises?${query}` : '/exercises'
 }
 
-const filterStatus = event => router.visit(filterUrl({ status: event.target.value }), visitOptions)
+const filterBy = (name, event) => router.visit(filterUrl({ [name]: event.target.value }), visitOptions)
 
 const actions = {
     new: { label: 'Start', class: 'bg-purple-600 px-4 text-white shadow-[0_3px_0_var(--color-purple-800)] hover:bg-purple-800' },
@@ -52,22 +53,37 @@ const actions = {
                     :aria-current="filters.topic === topic.value ? 'true' : undefined"
                     class="rounded-full border-2 px-4 py-[7px] text-[15px] font-semibold focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
                     :class="filters.topic === topic.value ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-ink'"
-                >
+                    >
                     {{ topic.label }}
                 </Link>
             </nav>
 
-            <div class="ml-auto flex items-center gap-2.5">
-                <label for="status" class="text-[15px] font-semibold">Status</label>
-                <select
-                    id="status"
-                    :value="filters.status ?? ''"
-                    class="rounded-xl border-2 border-line bg-white px-3 py-2.5 text-[15px] outline-purple-100 focus:border-purple-600 focus:outline-3"
-                    @change="filterStatus"
-                >
-                    <option value="">Alle</option>
-                    <option v-for="status in statuses" :key="status.value" :value="status.value">{{ status.label }}</option>
-                </select>
+            <div class="ml-auto flex flex-wrap items-center gap-x-5 gap-y-3">
+                <div class="flex items-center gap-2.5">
+                    <label for="source" class="text-[15px] font-semibold">Gemaakt door</label>
+                    <select
+                        id="source"
+                        :value="filters.source ?? ''"
+                        class="rounded-xl border-2 border-line bg-white px-3 py-2.5 text-[15px] outline-purple-100 focus:border-purple-600 focus:outline-3"
+                        @change="filterBy('source', $event)"
+                    >
+                        <option value="">Iedereen</option>
+                        <option v-for="source in sources" :key="source.value" :value="source.value">{{ source.label }}</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2.5">
+                    <label for="status" class="text-[15px] font-semibold">Status</label>
+                    <select
+                        id="status"
+                        :value="filters.status ?? ''"
+                        class="rounded-xl border-2 border-line bg-white px-3 py-2.5 text-[15px] outline-purple-100 focus:border-purple-600 focus:outline-3"
+                        @change="filterBy('status', $event)"
+                    >
+                        <option value="">Alle</option>
+                        <option v-for="status in statuses" :key="status.value" :value="status.value">{{ status.label }}</option>
+                    </select>
+                </div>
             </div>
         </div>
 

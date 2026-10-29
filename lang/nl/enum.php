@@ -7,6 +7,10 @@ return [
         'correct' => 'Juiste code',
         'wrong' => 'Foute code',
     ],
+    'exercise_source' => [
+        'ai' => 'AI (jouw code)',
+        'teacher' => 'Docent',
+    ],
     'navigation_group' => [
         'settings' => 'Instellingen',
     ],
