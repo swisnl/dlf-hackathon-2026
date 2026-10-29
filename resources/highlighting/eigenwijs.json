@@ -1,0 +1,30 @@
+{
+    "name": "eigenwijs",
+    "type": "light",
+    "colors": {
+        "editor.background": "#ffffff",
+        "editor.foreground": "#1d1a2f"
+    },
+    "tokenColors": [
+        {
+            "scope": "comment",
+            "settings": { "foreground": "#6b6680" }
+        },
+        {
+            "scope": ["keyword.control", "keyword.other", "storage", "constant.language"],
+            "settings": { "foreground": "#1d4ed8" }
+        },
+        {
+            "scope": ["entity.name.type", "entity.other.inherited-class", "support.class", "support.other.namespace"],
+            "settings": { "foreground": "#9d174d" }
+        },
+        {
+            "scope": "variable",
+            "settings": { "foreground": "#c2410c" }
+        },
+        {
+            "scope": "string",
+            "settings": { "foreground": "#0b7a75" }
+        }
+    ]
+}

@@ -6,6 +6,7 @@ use App\Enums\CodeSide;
 use App\Enums\ProgressStatus;
 use App\Enums\Variant;
 use App\Exceptions\ExerciseAlreadyAnswered;
+use App\Highlighting\CodeHighlighter;
 use App\Http\Requests\ExerciseAnswerRequest;
 use App\Http\Resources\StudentExerciseResource;
 use App\Models\Exercise;
@@ -68,7 +69,7 @@ class ExerciseController extends Controller
         return redirect()->route('exercises.show', $exercise);
     }
 
-    public function show(Request $request, Exercise $exercise): Response
+    public function show(Request $request, Exercise $exercise, CodeHighlighter $highlighter): Response
     {
         Gate::authorize('view', $exercise);
 
@@ -87,12 +88,14 @@ class ExerciseController extends Controller
             'variants' => array_map(fn (Variant $variant): array => [
                 'value' => $variant->value,
                 'label' => $variant->label(),
-                'code' => $exercise->code($variant),
+                'lines' => $highlighter->lines($exercise->code($variant)),
                 'correct' => $attempt !== null ? $exercise->side($variant) === CodeSide::Correct : null,
             ], Variant::cases()),
             'attempt' => $attempt === null ? null : [
+                // The student clicks the lines in the variant they think is wrong.
                 'chosen' => $attempt->chosen_side !== null ? $exercise->variant($attempt->chosen_side)->value : null,
-                'correct' => $attempt->chosen_side === CodeSide::Correct,
+                'lines' => $attempt->selected_lines,
+                'correct' => $attempt->chosen_side === CodeSide::Wrong,
                 'stars' => $attempt->stars,
                 'explanation' => $attempt->explanation,
                 'feedback' => $attempt->feedback,
@@ -108,7 +111,7 @@ class ExerciseController extends Controller
         $this->allowSlowAi();
 
         try {
-            $exercises->answer($exercise, $this->user($request), $request->choice(), $request->explanation());
+            $exercises->answer($exercise, $this->user($request), $request->choice(), $request->lines(), $request->explanation());
         } catch (ExerciseAlreadyAnswered) {
             return redirect()->route('exercises.show', $exercise)->with('error', 'Deze oefening had je al beantwoord.');
         } catch (Throwable $e) {

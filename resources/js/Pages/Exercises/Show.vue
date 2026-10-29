@@ -1,6 +1,7 @@
 <script setup>
+import { computed } from 'vue'
 import { Link, useForm } from '@inertiajs/vue3'
-import CodeBlock from '@/Components/CodeBlock.vue'
+import CodeLines from '@/Components/CodeLines.vue'
 import FieldError from '@/Components/FieldError.vue'
 import InlineCode from '@/Components/InlineCode.vue'
 import Owl from '@/Components/Owl.vue'
@@ -13,9 +14,38 @@ const props = defineProps({
     attempt: { type: Object, default: null },
 })
 
-const answer = useForm({ choice: null, explanation: '' })
+// The student clicks the wrong lines in the variant they think is wrong; that variant is the choice.
+const answer = useForm({ choice: null, lines: [], explanation: '' })
 const message = useForm({ content: '' })
 const next = useForm({})
+
+// A click in the other variant starts over there.
+function toggleLine(variant, line) {
+    if (answer.choice !== variant) {
+        answer.choice = variant
+        answer.lines = [line]
+
+        return
+    }
+
+    answer.lines = answer.lines.includes(line) ? answer.lines.filter(picked => picked !== line) : [...answer.lines, line]
+
+    if (!answer.lines.length) {
+        answer.choice = null
+    }
+}
+
+const selection = computed(() => {
+    const count = answer.lines.length
+
+    if (!count) {
+        return 'Nog niets aangeklikt. Kies een variant en klik op de foute regels.'
+    }
+
+    const variant = props.variants.find(variant => variant.value === answer.choice)
+
+    return `${count} ${count === 1 ? 'regel' : 'regels'} aangeklikt in ${variant.label}.`
+})
 
 function submitAnswer() {
     answer.post(`/exercises/${props.exercise.id}/answer`, { preserveScroll: true })
@@ -48,35 +78,39 @@ function nextExercise() {
                     <span v-if="attempt" class="chip bg-found-light text-[#075E5A]"><span aria-hidden="true">✓</span> Gemaakt</span>
                 </div>
                 <h1 class="font-display text-3xl font-extrabold tracking-tight sm:text-[40px] sm:leading-tight">{{ exercise.title }}</h1>
-                <p v-if="!attempt" class="max-w-3xl text-lg text-ink-muted">Eén van deze twee versies klopt. Kies de goede en leg uit <b class="text-ink">waarom</b>.</p>
+                <p v-if="!attempt" class="max-w-3xl text-lg text-ink-muted">Eén van deze twee versies klopt, in de andere zitten fouten. Klik in de foute versie op <b class="text-ink">elke regel</b> waar het misgaat en leg uit waarom.</p>
             </div>
 
             <form v-if="!attempt" class="mt-6" :aria-busy="answer.processing" @submit.prevent="submitAnswer">
-                <fieldset>
-                    <legend class="sr-only">Welke variant is juist?</legend>
-                    <div class="grid gap-5 md:grid-cols-2">
-                        <label
-                            v-for="variant in variants"
-                            :key="variant.value"
-                            class="card block min-w-0 cursor-pointer overflow-hidden border-2 has-[:checked]:border-purple-600 has-[:checked]:ring-[3px] has-[:checked]:ring-purple-100 has-[:focus-visible]:ring-[3px] has-[:focus-visible]:ring-purple-100"
-                        >
-                            <span class="flex items-center gap-2.5 border-b border-line-light px-4 py-3.5">
-                                <input v-model="answer.choice" type="radio" name="choice" :value="variant.value" required class="size-[18px] accent-purple-600">
-                                <b class="font-display text-xl">{{ variant.label }}</b>
-                            </span>
-                            <CodeBlock :code="variant.code" class="m-3" />
-                        </label>
-                    </div>
-                    <FieldError :message="answer.errors.choice" class="mt-3" />
-                </fieldset>
+                <div class="grid gap-5 md:grid-cols-2">
+                    <section
+                        v-for="variant in variants"
+                        :key="variant.value"
+                        :aria-labelledby="`variant-${variant.value}`"
+                        :class="['card min-w-0 overflow-hidden border-2', { 'border-purple-600': answer.choice === variant.value }]"
+                    >
+                        <div class="flex items-center justify-between gap-2.5 border-b border-line-light px-4 py-3.5">
+                            <h2 :id="`variant-${variant.value}`" class="font-display text-xl font-bold">{{ variant.label }}</h2>
+                            <span v-if="answer.choice === variant.value" class="chip bg-purple-100 text-purple-800">Jouw keuze</span>
+                        </div>
+                        <CodeLines
+                            :lines="variant.lines"
+                            :selected="answer.choice === variant.value ? answer.lines : []"
+                            interactive
+                            @toggle="line => toggleLine(variant.value, line)"
+                        />
+                    </section>
+                </div>
+                <p class="mt-3 text-ink-muted" aria-live="polite">{{ selection }}</p>
+                <FieldError :message="answer.errors.choice ?? answer.errors.lines" class="mt-1" />
 
                 <div class="card mt-5 flex flex-col gap-2 p-5 sm:p-6">
-                    <label for="explanation" class="font-display text-xl font-extrabold">Leg uit waarom jouw keuze juist is</label>
+                    <label for="explanation" class="font-display text-xl font-extrabold">Leg uit wat er misgaat op deze regels</label>
                     <p class="text-ink-muted">Dit is het belangrijkste deel: laat zien dat je snapt wat er gebeurt.</p>
                     <textarea id="explanation" v-model="answer.explanation" rows="5" required minlength="10" class="field mt-1" />
                     <FieldError :message="answer.errors.explanation" />
                     <div class="mt-2">
-                        <button type="submit" class="btn-primary" :disabled="answer.processing">{{ answer.processing ? 'De AI bekijkt je antwoord…' : 'Inleveren' }}</button>
+                        <button type="submit" class="btn-primary" :disabled="!answer.lines.length || answer.processing">{{ answer.processing ? 'De AI bekijkt je antwoord…' : 'Inleveren' }}</button>
                     </div>
                 </div>
             </form>
@@ -86,16 +120,17 @@ function nextExercise() {
                     <section v-for="variant in variants" :key="variant.value" :class="['card min-w-0 overflow-hidden border-2', { 'border-found': variant.correct }]">
                         <div class="flex flex-wrap items-center gap-2 border-b border-line-light px-4 py-3.5">
                             <b class="font-display text-xl">{{ variant.label }}</b>
-                            <span v-if="variant.correct" class="chip bg-found-light text-[#075E5A]"><span aria-hidden="true">✓</span> Juist</span>
+                            <span v-if="variant.correct" class="chip bg-found-light text-[#075E5A]"><span aria-hidden="true">✓</span> Klopt</span>
+                            <span v-else class="chip bg-missed-light text-missed-text"><span aria-hidden="true">!</span> Bevat fouten</span>
                             <span v-if="variant.value === attempt.chosen" class="chip bg-purple-100 text-purple-800">Jouw keuze</span>
                         </div>
-                        <CodeBlock :code="variant.code" class="m-3" />
+                        <CodeLines :lines="variant.lines" :selected="variant.value === attempt.chosen ? attempt.lines : []" />
                     </section>
                 </div>
 
                 <section class="card mt-5 flex flex-col gap-5 p-5 sm:p-7">
                     <div class="flex flex-wrap items-center justify-between gap-3">
-                        <h2 class="font-display text-[28px] font-extrabold">{{ attempt.correct ? 'Scherp gezien!' : 'Bijna! De andere versie klopt.' }}</h2>
+                        <h2 class="font-display text-[28px] font-extrabold">{{ attempt.correct ? 'Scherp gezien!' : 'Bijna! De fouten zitten in de andere versie.' }}</h2>
                         <span :class="['chip', attempt.stars > 0 ? 'bg-found-light text-[#075E5A]' : 'bg-missed-light text-missed-text']" title="Een inschatting van de AI"><span aria-hidden="true">{{ attempt.stars > 0 ? '✓' : '×' }}</span> {{ attempt.stars }} van {{ exercise.stars }} sterren</span>
                     </div>
                     <div>
