@@ -91,7 +91,7 @@ const actions = {
                     </span>
 
                     <Link
-                        :href="`/oefeningen/${exercise.id}`"
+                        :href="`/exercises/${exercise.id}`"
                         class="rounded-xl py-2.5 text-[15px] font-bold whitespace-nowrap transition focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
                         :class="actions[exercise.status].class"
                     >

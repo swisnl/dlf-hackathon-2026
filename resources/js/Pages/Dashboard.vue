@@ -46,7 +46,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
                 </p>
             </div>
 
-            <PrimaryButton :href="nextExerciseId ? `/oefeningen/${nextExerciseId}` : '/oefeningen'">Start een oefening</PrimaryButton>
+            <PrimaryButton :href="nextExerciseId ? `/exercises/${nextExerciseId}` : '/oefeningen'">Start een oefening</PrimaryButton>
         </div>
 
         <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
@@ -117,7 +117,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
                 <Link
                     v-for="exercise in suggestions"
                     :key="exercise.id"
-                    :href="`/oefeningen/${exercise.id}`"
+                    :href="`/exercises/${exercise.id}`"
                     class="flex flex-wrap items-center gap-x-[18px] gap-y-3 rounded-2xl border border-line-soft bg-white px-5 py-[18px] hover:border-purple-600 focus-visible:outline-3 focus-visible:outline-purple-600"
                 >
                     <div class="flex min-w-0 flex-[1_1_260px] flex-col gap-1.5">

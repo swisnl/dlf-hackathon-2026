@@ -25,7 +25,7 @@ final class ExercisePolicy
      */
     public function view(User $user, Exercise $exercise): bool
     {
-        return $user->role->hasPanelAccess() || $this->ownsSubmission($user, $exercise);
+        return $user->role->hasPanelAccess() || $this->canPractise($user, $exercise);
     }
 
     /**
@@ -62,7 +62,7 @@ final class ExercisePolicy
 
     public function answer(User $user, Exercise $exercise): Response
     {
-        if (!$this->ownsSubmission($user, $exercise)) {
+        if (!$this->canPractise($user, $exercise)) {
             return Response::denyAsNotFound();
         }
 
@@ -73,7 +73,7 @@ final class ExercisePolicy
 
     public function discuss(User $user, Exercise $exercise): Response
     {
-        if (!$this->ownsSubmission($user, $exercise)) {
+        if (!$this->canPractise($user, $exercise)) {
             return Response::denyAsNotFound();
         }
 
@@ -83,10 +83,11 @@ final class ExercisePolicy
     }
 
     /**
-     * Whether the AI made this exercise about the user's own code.
+     * Whether the exercise is published for every student, or the AI made it about the user's own code.
      */
-    private function ownsSubmission(User $user, Exercise $exercise): bool
+    private function canPractise(User $user, Exercise $exercise): bool
     {
-        return $exercise->submission !== null && $exercise->submission->user_id === $user->id;
+        return $exercise->published_at !== null
+            || ($exercise->submission !== null && $exercise->submission->user_id === $user->id);
     }
 }

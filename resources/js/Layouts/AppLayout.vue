@@ -18,7 +18,16 @@ const menu = [
     { label: 'Mijn code', href: '/submissions' },
 ]
 
-const isActive = href => (href === '/' ? page.url === '/' : page.url.startsWith(href))
+// An exercise about the student's own code lives under "Mijn code", a published one under "Oefeningen".
+const section = computed(() => {
+    if (page.component === 'Exercises/Show') {
+        return page.props.exercise.submission ? '/submissions' : '/oefeningen'
+    }
+
+    return page.url
+})
+
+const isActive = href => (href === '/' ? section.value === '/' : section.value.startsWith(href))
 const onProfile = computed(() => isActive('/profiel'))
 </script>
 
@@ -66,6 +75,7 @@ const onProfile = computed(() => isActive('/profiel'))
     </header>
 
     <main class="mx-auto flex max-w-7xl flex-col gap-7 px-4 pt-10 pb-16 sm:px-6">
+        <div v-if="page.props.flash?.error" class="rounded-[14px] bg-missed-light px-4 py-3 text-[15px] text-missed-text" role="alert">{{ page.props.flash.error }}</div>
         <slot />
     </main>
 </template>

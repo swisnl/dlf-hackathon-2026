@@ -46,9 +46,28 @@ class ExerciseTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_a_published_exercise_without_a_submission_is_not_shown_here(): void
+    public function test_every_student_can_open_and_answer_a_published_exercise(): void
     {
+        AnswerAssessor::fake([['score' => 10, 'feedback' => 'Goed gezien!']]);
         $exercise = Exercise::factory()->create();
+        $student = User::factory()->create();
+
+        $this->actingAs($student)->get(route('exercises.show', $exercise))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page->component('Exercises/Show')
+                ->where('exercise.submission', null));
+
+        $this->actingAs($student)->post(route('exercises.answer', $exercise), [
+            'choice' => $exercise->variant(CodeSide::Correct)->value,
+            'explanation' => 'Deze variant controleert de invoer.',
+        ])->assertRedirect(route('exercises.show', $exercise));
+
+        $this->assertDatabaseHas('attempts', ['exercise_id' => $exercise->id, 'user_id' => $student->id]);
+    }
+
+    public function test_an_unpublished_exercise_without_a_submission_stays_hidden(): void
+    {
+        $exercise = Exercise::factory()->unpublished()->create();
 
         $this->actingAs(User::factory()->create())->get(route('exercises.show', $exercise))
             ->assertForbidden();
