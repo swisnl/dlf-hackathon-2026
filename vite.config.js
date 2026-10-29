@@ -19,10 +19,10 @@ export default defineConfig({
                     weights: [600, 800],
                 }),
                 bunny('Figtree', {
-                    weights: [400, 600, 700],
+                    weights: [400, 500, 600, 700],
                 }),
                 bunny('JetBrains Mono', {
-                    weights: [400],
+                    weights: [400, 600],
                 }),
             ],
         }),

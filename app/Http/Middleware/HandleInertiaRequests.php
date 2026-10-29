@@ -2,9 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -37,17 +35,12 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $user = $request->user();
-
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $user instanceof User ? [
-                    'name' => $user->name,
-                    'initials' => Str::of($user->name)->explode(' ')->filter()->take(2)
-                        ->map(fn (string $part): string => mb_strtoupper(mb_substr($part, 0, 1)))->implode(''),
-                ] : null,
+                'user' => fn (): ?array => $request->user()?->only('id', 'name', 'email', 'role', 'stars'),
             ],
+            'status' => fn (): mixed => $request->session()->get('status'),
             'flash' => [
                 'error' => fn (): mixed => $request->session()->get('error'),
             ],

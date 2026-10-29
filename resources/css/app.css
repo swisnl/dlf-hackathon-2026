@@ -5,28 +5,35 @@
 
 /* Eigenwijs house style */
 @theme {
-    --font-sans: 'Figtree', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
-    --font-display: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
-    --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: var(--font-bricolage-grotesque), ui-sans-serif, system-ui, sans-serif;
+    --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
-    --color-paars: #9333ea;
-    --color-paars-diep: #6b21a8;
-    --color-paars-licht: #f3e8ff;
-    --color-inkt: #1d1a2f;
-    --color-inkt-zacht: #4a4660;
-    --color-ster: #ffb800;
-    --color-ster-licht: #fff3cc;
-    --color-gevonden: #0b7a75;
-    --color-gevonden-licht: #e1f4f2;
-    --color-gemist: #c25e00;
-    --color-gemist-licht: #fff0dc;
+    --color-purple-600: #9333ea;
+    --color-purple-800: #6b21a8;
+    --color-star: #ffb800;
+    --color-found: #0b7a75;
+    --color-missed: #c25e00;
+    --color-paper: #fff8f2;
+    --color-ink: #1d1a2f;
+    --color-ink-muted: #4a4660;
+    --color-line: #d8d0c8;
+
+    /* Lighter tints and extra tokens for the student pages. */
+    --color-star-light: #fff3cc;
+    --color-found-light: #e1f4f2;
+    --color-missed-light: #fff0dc;
     /* #C25E00 is too light for text on white (4.29:1); use this for text. */
-    --color-gemist-tekst: #8a4300;
-    --color-papier: #fff8f2;
+    --color-missed-text: #8a4300;
     --color-code: #fbf7f3;
-    --color-rand: #eadfd6;
-    --color-veld: #d8d0c8;
+    --color-line-light: #eadfd6;
+}
+
+@layer base {
+    body {
+        @apply bg-paper font-sans text-ink antialiased;
+    }
 }
 
 @utility btn {
@@ -34,15 +41,15 @@
 }
 
 @utility btn-primary {
-    @apply btn bg-paars text-white shadow-[0_4px_0_var(--color-paars-diep)] hover:bg-paars-diep;
+    @apply btn bg-purple-600 text-white shadow-[0_4px_0_var(--color-purple-800)] hover:bg-purple-800;
 }
 
 @utility btn-secondary {
-    @apply btn border-2 border-inkt bg-white px-5 py-3 text-inkt shadow-[0_4px_0_var(--color-inkt)] hover:bg-papier;
+    @apply btn border-2 border-ink bg-white px-5 py-3 text-ink shadow-[0_4px_0_var(--color-ink)] hover:bg-paper;
 }
 
 @utility card {
-    @apply rounded-[20px] border border-rand bg-white;
+    @apply rounded-[20px] border border-line-light bg-white;
 }
 
 @utility chip {
@@ -50,7 +57,7 @@
 }
 
 @utility field {
-    @apply w-full rounded-xl border-2 border-veld bg-white px-3.5 py-3 text-base text-inkt outline-none focus:border-paars focus:ring-[3px] focus:ring-paars-licht;
+    @apply w-full rounded-xl border-2 border-line bg-white px-3.5 py-3 text-base text-ink outline-none focus:border-purple-600 focus:ring-[3px] focus:ring-purple-100;
 }
 
 @utility label {
@@ -58,5 +65,5 @@
 }
 
 @utility link {
-    @apply font-semibold text-paars hover:text-paars-diep;
+    @apply font-semibold text-purple-600 hover:text-purple-800;
 }
