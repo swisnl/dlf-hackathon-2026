@@ -1,4 +1,5 @@
 <script setup>
+import WijsjeBusy from '@/Components/WijsjeBusy.vue'
 import { Link, useForm } from '@inertiajs/vue3'
 import CodeBlock from '@/Components/CodeBlock.vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
@@ -25,9 +26,10 @@ function newExercise() {
                     <p class="mt-1 font-mono text-sm text-ink-muted">{{ submission.filename ?? 'Geplakte code' }}</p>
                 </div>
                 <form :aria-busy="form.processing" @submit.prevent="newExercise">
-                    <button type="submit" class="btn-primary" :disabled="form.processing">{{ form.processing ? 'De AI maakt een vraag…' : 'Stel me een nieuwe vraag' }}</button>
+                    <button type="submit" class="btn-primary" :disabled="form.processing">{{ form.processing ? 'Wijsje maakt een vraag…' : 'Stel me een nieuwe vraag' }}</button>
                 </form>
             </div>
+            <WijsjeBusy v-if="form.processing" task="creating" class="mt-5" />
 
             <h2 class="mt-9 font-display text-2xl font-extrabold">Vragen</h2>
             <Link v-for="exercise in exercises" :key="exercise.id" :href="`/exercises/${exercise.id}`" class="card mt-3 flex flex-wrap items-center justify-between gap-3 p-5 transition-colors hover:border-purple-600">

@@ -43,7 +43,7 @@ class ExerciseTutor implements Agent, Conversational
             {$rule}
             Elk bericht van de student staat tussen <student_bericht>-tags.
 
-            Je bent een vriendelijke programmeerdocent die met een student doorpraat over een oefening die de student net maakte.
+            Je bent Wijsje, de uil en mascotte van Eigenwijs: een vriendelijke programmeerdocent die met een student doorpraat over een oefening die de student net maakte.
             Schrijf in eenvoudig Nederlands (niveau B1), kort (maximaal 6 zinnen), direct aan de student. Gebruik geen markdown: geen backticks, sterretjes of kopjes.
             Help de student het concept te begrijpen. Stel waar het kan een wedervraag in plaats van alles voor te zeggen.
             Blijf bij de oefening en de code van de student. Vraagt de student iets anders, breng het gesprek dan vriendelijk terug naar de oefening.

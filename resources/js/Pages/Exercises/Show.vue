@@ -6,6 +6,8 @@ import CodeLines from '@/Components/CodeLines.vue'
 import FieldError from '@/Components/FieldError.vue'
 import InlineCode from '@/Components/InlineCode.vue'
 import Owl from '@/Components/Owl.vue'
+import WijsjeBusy from '@/Components/WijsjeBusy.vue'
+import WijsjeThinking from '@/Components/WijsjeThinking.vue'
 import AppLayout from '@/Layouts/AppLayout.vue'
 
 const props = defineProps({
@@ -112,9 +114,11 @@ function nextExercise() {
                     <textarea id="explanation" v-model="answer.explanation" rows="5" required minlength="10" class="field mt-1" />
                     <FieldError :message="answer.errors.explanation" />
                     <div class="mt-2">
-                        <button type="submit" class="btn-primary" :disabled="!answer.lines.length || answer.processing">{{ answer.processing ? 'De AI bekijkt je antwoord…' : 'Inleveren' }}</button>
+                        <button type="submit" class="btn-primary" :disabled="!answer.lines.length || answer.processing">{{ answer.processing ? 'Wijsje kijkt je antwoord na…' : 'Inleveren' }}</button>
                     </div>
                 </div>
+
+                <WijsjeBusy v-if="answer.processing" task="checking" class="mt-5" />
             </form>
 
             <template v-else>
@@ -145,8 +149,8 @@ function nextExercise() {
                     </div>
                     <div class="flex items-start gap-3 rounded-[14px] bg-star-light px-4 py-3.5">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8A6400" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="mt-0.5 shrink-0"><path d="M9 18h6M10 21h4" /><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" /></svg>
-                        <div class="leading-relaxed">
-                            <b>Waarom:</b>
+                        <div class="flex min-w-0 flex-1 flex-col gap-3 leading-relaxed">
+                            <b>Waarom</b>
                             <p v-for="error in attempt.errors" :key="error.id" class="whitespace-pre-line">
                                 <span class="font-semibold"><InlineCode :text="error.title" /> (regel {{ error.line }} van {{ attempt.wrong_variant }}).</span> <InlineCode :text="error.explanation" />
                             </p>
@@ -155,7 +159,7 @@ function nextExercise() {
                 </section>
 
                 <section id="gesprek" class="card mt-5 p-5 sm:p-7">
-                    <h2 class="font-display text-2xl font-extrabold">Praat erover door</h2>
+                    <h2 class="font-display text-2xl font-extrabold">Praat erover door met Wijsje</h2>
                     <p class="text-ink-muted">Reageer op de feedback of stel een vraag over deze oefening.</p>
                     <div class="mt-5 flex flex-col gap-3">
                         <template v-for="chat in attempt.messages" :key="chat.id">
@@ -164,25 +168,27 @@ function nextExercise() {
                             </div>
                             <div v-else class="flex items-end gap-2.5">
                                 <Owl class="size-8 shrink-0" />
-                                <p class="max-w-[85%] rounded-2xl rounded-bl-md bg-paper px-4 py-2.5 whitespace-pre-line"><InlineCode :text="chat.content" /></p>
+                                <p class="max-w-[85%] rounded-2xl rounded-bl-md bg-paper px-4 py-2.5 whitespace-pre-line"><span class="sr-only">Wijsje: </span><InlineCode :text="chat.content" /></p>
                             </div>
                         </template>
                         <div v-if="message.processing" class="flex justify-end">
                             <p class="max-w-[85%] rounded-2xl rounded-br-md bg-purple-600/70 px-4 py-2.5 whitespace-pre-line text-white">{{ message.content }}</p>
                         </div>
+                        <WijsjeThinking v-if="message.processing" />
                     </div>
                     <form class="mt-5 flex flex-col gap-3" :aria-busy="message.processing" @submit.prevent="submitMessage">
                         <label for="content" class="sr-only">Jouw reactie</label>
                         <textarea id="content" v-model="message.content" rows="3" required class="field" placeholder="Typ je reactie…" />
                         <FieldError :message="message.errors.content" />
                         <div>
-                            <button type="submit" class="btn-primary" :disabled="message.processing">{{ message.processing ? 'De AI schrijft een reactie…' : 'Verstuur' }}</button>
+                            <button type="submit" class="btn-primary" :disabled="message.processing">{{ message.processing ? 'Wijsje schrijft een reactie…' : 'Verstuur' }}</button>
                         </div>
                     </form>
                 </section>
 
                 <form v-if="exercise.submission" class="mt-8" :aria-busy="next.processing" @submit.prevent="nextExercise">
-                    <button type="submit" class="btn-secondary" :disabled="next.processing">{{ next.processing ? 'De AI maakt een vraag…' : 'Volgende vraag over deze code' }}</button>
+                    <button type="submit" class="btn-secondary" :disabled="next.processing">{{ next.processing ? 'Wijsje maakt een vraag…' : 'Volgende vraag over deze code' }}</button>
+                    <WijsjeBusy v-if="next.processing" task="creating" class="mt-5" />
                 </form>
             </template>
         </div>
