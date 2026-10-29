@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Head, Link, usePage } from '@inertiajs/vue3'
+import BadgeMoment from '@/Components/BadgeMoment.vue'
 import Owl from '@/Components/Owl.vue'
 import StarIcon from '@/Components/StarIcon.vue'
 import Wijsje from '@/Components/Wijsje.vue'
@@ -81,4 +82,5 @@ const onProfile = computed(() => isActive('/profile'))
     </main>
 
     <Wijsje />
+    <BadgeMoment />
 </template>

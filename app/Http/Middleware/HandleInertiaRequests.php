@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Badge;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -46,6 +48,28 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'error' => fn (): mixed => $request->session()->get('error'),
             ],
+            'newBadges' => fn (): array => $request->user() instanceof User ? $this->newBadges($request->user()) : [],
         ];
+    }
+
+    /**
+     * The badges the student earned but has not seen the pop-up for yet, lowest first.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function newBadges(User $user): array
+    {
+        $badges = $user->badges()->wherePivotNull('seen_at')->orderBy('threshold')->get();
+
+        if ($badges->isEmpty()) {
+            return [];
+        }
+
+        $next = Badge::query()->where('threshold', '>', $user->stars)->orderBy('threshold')->first();
+
+        return $badges->map(fn (Badge $badge): array => [
+            ...$badge->only('id', 'name', 'threshold', 'icon', 'color'),
+            'next' => $next?->only('name', 'threshold'),
+        ])->values()->all();
     }
 }

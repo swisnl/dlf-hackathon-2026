@@ -50,6 +50,20 @@
     }
 }
 
+@keyframes badge-pop {
+    from {
+        opacity: 0;
+        transform: scale(0.4) rotate(-12deg);
+    }
+}
+
+@keyframes badge-confetti {
+    from {
+        opacity: 0;
+        transform: translateY(-90px);
+    }
+}
+
 @layer base {
     body {
         @apply bg-paper font-sans text-ink antialiased;

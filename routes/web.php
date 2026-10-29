@@ -14,6 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/', DashboardController::class)->name('dashboard');
     Route::get('exercises', [ExerciseController::class, 'index'])->name('exercises.index');
     Route::get('badges', [BadgeController::class, 'index'])->name('badges.index');
+    Route::post('badges/{badge}/seen', [BadgeController::class, 'seen'])->name('badges.seen');
 
     Route::get('submissions', [SubmissionController::class, 'index'])->name('submissions.index');
     Route::post('submissions', [SubmissionController::class, 'store'])->name('submissions.store')->middleware('throttle:ai');
