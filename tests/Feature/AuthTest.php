@@ -15,6 +15,16 @@ class AuthTest extends TestCase
         $this->get(route('submissions.index'))->assertRedirect(route('login'));
     }
 
+    public function test_login_and_registration_do_not_use_the_house_style_yet(): void
+    {
+        foreach (['login', 'register'] as $route) {
+            $this->get(route($route))->assertOk()->assertSee('Code-overhoring')->assertDontSee('eigenwijs');
+        }
+
+        $this->actingAs(User::factory()->create())->get(route('submissions.index'))
+            ->assertOk()->assertSee('eigenwijs');
+    }
+
     public function test_a_student_can_register(): void
     {
         $this->post('/register', [

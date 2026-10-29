@@ -1,14 +1,12 @@
 <x-layout title="Mijn code">
-    <div class="mb-7">
-        <h1 class="font-display text-4xl font-extrabold tracking-tight sm:text-[44px]">Hoi {{ Str::before(auth()->user()?->name ?? '', ' ') }}!</h1>
-        <p class="mt-1.5 text-lg text-inkt-zacht">Upload je code. De AI maakt er een vraag over, en jij legt uit hoe het zit.</p>
-    </div>
-
     <div class="grid gap-8 lg:grid-cols-5">
         <section class="lg:col-span-3">
             <form method="POST" action="{{ route('submissions.store') }}" enctype="multipart/form-data" data-ai="De AI maakt een vraag…" class="card flex flex-col gap-5 p-6 sm:p-7">
                 @csrf
-                <h2 class="font-display text-2xl font-extrabold">Upload je code</h2>
+                <div>
+                    <h1 class="font-display text-[28px] font-extrabold tracking-tight">Upload je code</h1>
+                    <p class="mt-1 text-inkt-zacht">De AI stelt je vragen over jouw code. Kies steeds welke variant juist is en leg uit waarom.</p>
+                </div>
                 <div class="flex flex-col gap-2">
                     <label for="title" class="label">Waar gaat je code over?</label>
                     <input id="title" name="title" type="text" value="{{ old('title') }}" required placeholder="Bijvoorbeeld: opdracht 3, winkelmandje" class="field">
