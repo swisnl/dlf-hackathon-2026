@@ -36,7 +36,7 @@ class AuthenticationTest extends TestCase
 
         $this->get('/')
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page->component('Home'));
+            ->assertInertia(fn (AssertableInertia $page) => $page->component('Dashboard'));
     }
 
     public function test_users_can_stay_logged_in(): void
