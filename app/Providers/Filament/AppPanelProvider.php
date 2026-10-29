@@ -112,7 +112,11 @@ class AppPanelProvider extends PanelProvider
                 FilamentDeveloperLoginsPlugin::make()
                     ->enabled(app()->environment('local'))
                     ->switchable(false)
-                    ->users(fn () => User::query()->pluck('email', 'name')->toArray()),
+                    ->users(fn (): array => User::query()
+                        ->whereIn('id', User::query()->selectRaw('min(id)')->groupBy('role'))
+                        ->orderBy('id')
+                        ->pluck('email', 'name')
+                        ->all()),
                 GravatarPlugin::make(),
                 LightSwitchPlugin::make(),
                 StickySaveBarPlugin::make()
