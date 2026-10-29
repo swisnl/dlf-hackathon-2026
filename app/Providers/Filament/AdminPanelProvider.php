@@ -2,7 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Enums\UserRole;
 use App\Filament\Pages\Auth\EditProfile;
 use App\Models\User;
 use Awcodes\Gravatar\GravatarPlugin;
@@ -112,7 +111,13 @@ class AdminPanelProvider extends PanelProvider
                 FilamentDeveloperLoginsPlugin::make()
                     ->enabled(app()->environment('local'))
                     ->switchable(false)
-                    ->users(fn () => User::query()->where('role', UserRole::Admin)->pluck('email', 'name')->toArray()),
+                    ->users(fn (): array => User::query()
+                        ->whereIn('id', User::query()->selectRaw('min(id)')->groupBy('role'))
+                        ->orderBy('id')
+                        ->get()
+                        ->filter(fn (User $user): bool => $user->role->hasPanelAccess())
+                        ->pluck('email', 'name')
+                        ->all()),
                 GravatarPlugin::make(),
                 LightSwitchPlugin::make(),
                 StickySaveBarPlugin::make()
