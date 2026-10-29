@@ -9,8 +9,11 @@ const colors = {
     retry: 'bg-[#FFF0DC] text-[#8A4300]',
     done: 'bg-[#E1F4F2] text-[#075E5A]',
 }
+
+// The status is never shown by colour alone.
+const symbols = { retry: '!', done: '✓' }
 </script>
 
 <template>
-    <span class="rounded-full px-2.5 py-1 text-[13px] font-semibold" :class="colors[status]">{{ label }}</span>
+    <span class="rounded-full px-2.5 py-1 text-[13px] font-semibold" :class="colors[status]"><span v-if="symbols[status]" aria-hidden="true">{{ symbols[status] }} </span>{{ label }}</span>
 </template>

@@ -153,7 +153,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
                 </p>
             </section>
 
-            <aside class="flex flex-[1_1_320px] flex-col gap-4">
+            <aside class="flex min-w-0 flex-[1_1_320px] flex-col gap-4">
                 <div class="flex flex-col gap-4 rounded-[20px] border border-line-soft bg-white p-[22px]">
                     <div class="flex items-baseline justify-between">
                         <h2 class="font-display text-[22px] font-extrabold">Jouw badges</h2>

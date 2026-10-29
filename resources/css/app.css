@@ -37,6 +37,11 @@
     body {
         @apply bg-paper font-sans text-ink antialiased;
     }
+
+    /* One visible focus ring for everything you can reach with the keyboard. */
+    :focus-visible {
+        @apply outline-3 outline-offset-2 outline-purple-600;
+    }
 }
 
 @utility btn {
