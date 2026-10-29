@@ -19,6 +19,8 @@
     --color-ink-muted: #4a4660;
     --color-line: #d8d0c8;
     --color-line-soft: #eadfd6;
+    --color-star-soft: #fff3cc;
+    --color-peach: #ffe8d6;
 }
 
 @layer base {

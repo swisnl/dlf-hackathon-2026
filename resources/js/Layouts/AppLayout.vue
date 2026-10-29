@@ -11,12 +11,6 @@ defineProps({
 const page = usePage()
 const user = computed(() => page.props.auth.user)
 
-const initials = computed(() => {
-    const words = user.value.name.trim().split(/\s+/)
-
-    return (words[0][0] + (words.length > 1 ? words.at(-1)[0] : '')).toUpperCase()
-})
-
 const menu = [
     { label: 'Dashboard', href: '/' },
     { label: 'Oefeningen', href: '/oefeningen' },
@@ -24,6 +18,7 @@ const menu = [
 ]
 
 const isActive = href => (href === '/' ? page.url === '/' : page.url.startsWith(href))
+const onProfile = computed(() => isActive('/profiel'))
 </script>
 
 <template>
@@ -50,7 +45,7 @@ const isActive = href => (href === '/' ? page.url === '/' : page.url.startsWith(
             </nav>
 
             <div class="ml-auto flex items-center gap-3">
-                <span class="inline-flex items-center gap-1.5 rounded-full bg-[#FFF3CC] px-3.5 py-2 font-bold">
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-star-soft px-3.5 py-2 font-bold">
                     <StarIcon class="size-5" />
                     {{ user.stars }}
                     <span class="sr-only">sterren</span>
@@ -58,15 +53,12 @@ const isActive = href => (href === '/' ? page.url === '/' : page.url.startsWith(
 
                 <Link
                     href="/profiel"
+                    :aria-current="onProfile ? 'page' : undefined"
                     :aria-label="`Profiel van ${user.name}`"
-                    class="flex size-11 items-center justify-center rounded-full bg-ink font-bold text-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
+                    class="flex size-11 items-center justify-center rounded-full font-bold text-white focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-purple-600"
+                    :class="onProfile ? 'bg-purple-600 ring-3 ring-purple-100' : 'bg-ink'"
                 >
-                    {{ initials }}
-                </Link>
-
-                <!-- Temporary until the profile page (#25) takes over logging out. -->
-                <Link href="/logout" method="post" as="button" class="cursor-pointer text-[15px] font-semibold text-ink-muted underline">
-                    Uitloggen
+                    {{ user.initials }}
                 </Link>
             </div>
         </div>

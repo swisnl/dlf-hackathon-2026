@@ -162,6 +162,7 @@ return [
     'custom' => [],
 
     'attributes' => [
+        'current_password' => 'huidige wachtwoord',
         'email' => 'e-mailadres',
         'name' => 'naam',
         'password' => 'wachtwoord',
