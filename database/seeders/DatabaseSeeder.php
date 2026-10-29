@@ -34,5 +34,7 @@ class DatabaseSeeder extends Seeder
             'email' => 'student@example.com',
         ]);
         User::factory()->count(29)->create();
+
+        $this->call(DemoProgressSeeder::class);
     }
 }
