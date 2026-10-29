@@ -51,7 +51,7 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
 
         <div class="grid grid-cols-[repeat(auto-fit,minmax(240px,1fr))] gap-5">
             <div class="flex items-center gap-[18px] rounded-[20px] border border-line-soft bg-white px-6 py-[22px]">
-                <div class="flex size-[60px] items-center justify-center rounded-2xl bg-[#FFF3CC]">
+                <div class="flex size-[60px] items-center justify-center rounded-2xl bg-star-soft">
                     <StarIcon class="size-[34px]" />
                 </div>
                 <div>

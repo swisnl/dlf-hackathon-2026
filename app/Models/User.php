@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 /**
  * @property \App\Enums\UserRole $role
@@ -98,6 +99,30 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             ->using(BadgeUser::class)
             ->withPivot(['awarded_at', 'seen_at'])
             ->withTimestamps();
+    }
+
+    /**
+     * The highest badge (by star threshold) this student has earned.
+     */
+    public function highestBadge(): ?Badge
+    {
+        return $this->badges()->orderByDesc('threshold')->first();
+    }
+
+    /**
+     * The initials of the first and last name, e.g. "DB" for "Daan Bakker".
+     */
+    public function initials(): string
+    {
+        $words = Str::of($this->name)->squish()->explode(' ');
+
+        $initials = Str::substr((string) $words->first(), 0, 1);
+
+        if ($words->count() > 1) {
+            $initials .= Str::substr((string) $words->last(), 0, 1);
+        }
+
+        return Str::upper($initials);
     }
 
     public function isAdmin(): bool
