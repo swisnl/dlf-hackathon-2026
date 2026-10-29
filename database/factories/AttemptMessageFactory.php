@@ -2,15 +2,15 @@
 
 namespace Database\Factories;
 
-use App\Enums\ExerciseMessageRole;
-use App\Models\Exercise;
-use App\Models\ExerciseMessage;
+use App\Enums\AttemptMessageRole;
+use App\Models\Attempt;
+use App\Models\AttemptMessage;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ExerciseMessage>
+ * @extends Factory<AttemptMessage>
  */
-class ExerciseMessageFactory extends Factory
+class AttemptMessageFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -20,8 +20,8 @@ class ExerciseMessageFactory extends Factory
     public function definition(): array
     {
         return [
-            'exercise_id' => Exercise::factory()->answered(),
-            'role' => ExerciseMessageRole::Student,
+            'attempt_id' => Attempt::factory(),
+            'role' => AttemptMessageRole::Student,
             'content' => fake()->sentence(),
         ];
     }

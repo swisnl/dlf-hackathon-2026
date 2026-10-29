@@ -30,12 +30,13 @@ class ExerciseController extends Controller
         return redirect()->route('exercises.show', $exercise);
     }
 
-    public function show(Exercise $exercise): View
+    public function show(Request $request, Exercise $exercise): View
     {
         Gate::authorize('view', $exercise);
 
         return view('exercises.show', [
-            'exercise' => $exercise->load('submission', 'messages'),
+            'exercise' => $exercise->load('submission', 'topic', 'errors'),
+            'attempt' => $exercise->attempts()->whereBelongsTo($this->user($request))->with('messages')->first(),
         ]);
     }
 
@@ -51,7 +52,7 @@ class ExerciseController extends Controller
         $this->allowSlowAi();
 
         try {
-            $exercises->answer($exercise, $request->enum('choice', Variant::class) ?? Variant::A, $request->string('explanation')->toString());
+            $exercises->answer($exercise, $this->user($request), $request->enum('choice', Variant::class) ?? Variant::A, $request->string('explanation')->toString());
         } catch (ExerciseAlreadyAnswered) {
             return redirect()->route('exercises.show', $exercise)->with('error', 'Deze oefening had je al beantwoord.');
         } catch (Throwable $e) {

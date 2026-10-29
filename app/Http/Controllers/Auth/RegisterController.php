@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
@@ -26,7 +27,8 @@ class RegisterController extends Controller
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
-        $user = User::create($data);
+        // Registering always makes a student; teachers and admins are managed in the admin panel.
+        $user = User::create([...$data, 'role' => UserRole::Student]);
 
         Auth::login($user);
         $request->session()->regenerate();

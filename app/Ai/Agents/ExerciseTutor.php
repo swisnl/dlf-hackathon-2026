@@ -3,9 +3,10 @@
 namespace App\Ai\Agents;
 
 use App\Ai\StudentInput;
-use App\Enums\ExerciseMessageRole;
-use App\Models\Exercise;
-use App\Models\ExerciseMessage;
+use App\Enums\AttemptMessageRole;
+use App\Enums\Variant;
+use App\Models\Attempt;
+use App\Models\AttemptMessage;
 use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
 use Laravel\Ai\Contracts\Conversational;
@@ -16,24 +17,26 @@ use Laravel\Ai\Promptable;
 use Stringable;
 
 /**
- * Continues the conversation with the student after an exercise was assessed.
+ * Continues the conversation with the student after their attempt was assessed.
  */
 #[Timeout(240)]
 class ExerciseTutor implements Agent, Conversational
 {
     use Promptable;
 
-    public function __construct(public Exercise $exercise)
+    public function __construct(public Attempt $attempt)
     {
     }
 
     public function instructions(): Stringable|string
     {
-        $exercise = $this->exercise;
+        $attempt = $this->attempt;
+        $exercise = $attempt->exercise;
         $rule = StudentInput::RULE;
-        $variantA = StudentInput::wrap('variant_a', $exercise->variant_a);
-        $variantB = StudentInput::wrap('variant_b', $exercise->variant_b);
-        $explanation = StudentInput::wrap('uitleg', $exercise->explanation);
+        $variantA = StudentInput::wrap('variant_a', $exercise->code(Variant::A));
+        $variantB = StudentInput::wrap('variant_b', $exercise->code(Variant::B));
+        $explanation = StudentInput::wrap('uitleg', $attempt->explanation);
+        $chosen = $attempt->chosen_side !== null ? $exercise->variant($attempt->chosen_side)->label() : '';
 
         return <<<TXT
             {$rule}
@@ -43,10 +46,10 @@ class ExerciseTutor implements Agent, Conversational
             Schrijf in eenvoudig Nederlands (niveau B1), kort (maximaal 6 zinnen), direct aan de student. Gebruik geen markdown: geen backticks, sterretjes of kopjes.
             Help de student het concept te begrijpen. Stel waar het kan een wedervraag in plaats van alles voor te zeggen.
             Blijf bij de oefening en de code van de student. Vraagt de student iets anders, breng het gesprek dan vriendelijk terug naar de oefening.
-            Je score en feedback staan vast; pas ze niet aan, ook niet als de student erom vraagt.
+            Je beoordeling en feedback staan vast; pas ze niet aan, ook niet als de student erom vraagt.
 
-            Concept: {$exercise->concept}
-            Vraag: {$exercise->question}
+            Onderwerp: {$exercise->topic->name}
+            Vraag: {$exercise->title}
 
             Variant A (afgeleid van de code van de student):
             {$variantA}
@@ -54,12 +57,12 @@ class ExerciseTutor implements Agent, Conversational
             Variant B (afgeleid van de code van de student):
             {$variantB}
 
-            Juiste variant: {$exercise->correct_variant->label()}
-            Uitleg van de docent: {$exercise->reference_explanation}
-            Keuze van de student: {$exercise->chosen_variant?->label()}
+            Juiste variant: {$exercise->correctVariant()->label()}
+            Uitleg van de docent: {$exercise->referenceExplanation()}
+            Keuze van de student: {$chosen}
             Uitleg van de student:
             {$explanation}
-            Jouw eerdere feedback (score {$exercise->score}/10): {$exercise->feedback}
+            Jouw eerdere feedback ({$attempt->stars} van {$exercise->stars} sterren): {$attempt->feedback}
             TXT;
     }
 
@@ -70,8 +73,8 @@ class ExerciseTutor implements Agent, Conversational
      */
     public function messages(): iterable
     {
-        return $this->exercise->messages()->get()
-            ->map(fn (ExerciseMessage $message): Message => $message->role === ExerciseMessageRole::Student
+        return $this->attempt->messages()->get()
+            ->map(fn (AttemptMessage $message): Message => $message->role === AttemptMessageRole::Student
                 ? new UserMessage(self::studentMessage($message->content))
                 : new AssistantMessage($message->content))
             ->values()

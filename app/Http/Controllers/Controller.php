@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Http\Request;
 use Laravel\Ai\Exceptions\ProviderConnectionException;
 use Throwable;
 
@@ -28,5 +30,13 @@ abstract class Controller
         return $e instanceof ProviderConnectionException
             ? 'De AI deed er te lang over of was niet bereikbaar. '.$message
             : $message;
+    }
+
+    protected function user(Request $request): User
+    {
+        $user = $request->user();
+        assert($user instanceof User);
+
+        return $user;
     }
 }

@@ -2,22 +2,22 @@
 
 namespace App\Models;
 
-use App\Enums\ExerciseMessageRole;
-use Database\Factories\ExerciseMessageFactory;
+use App\Enums\AttemptMessageRole;
+use Database\Factories\AttemptMessageFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * @property \App\Enums\ExerciseMessageRole $role
+ * @property \App\Enums\AttemptMessageRole $role
  */
 #[Fillable(
     ['role', 'content'],
 )]
-class ExerciseMessage extends Model
+class AttemptMessage extends Model
 {
-    /** @use HasFactory<ExerciseMessageFactory> */
+    /** @use HasFactory<AttemptMessageFactory> */
     use HasFactory;
 
     /**
@@ -28,15 +28,15 @@ class ExerciseMessage extends Model
     protected function casts(): array
     {
         return [
-            'role' => ExerciseMessageRole::class,
+            'role' => AttemptMessageRole::class,
         ];
     }
 
     /**
-     * @return BelongsTo<Exercise, $this>
+     * @return BelongsTo<Attempt, $this>
      */
-    public function exercise(): BelongsTo
+    public function attempt(): BelongsTo
     {
-        return $this->belongsTo(Exercise::class);
+        return $this->belongsTo(Attempt::class);
     }
 }

@@ -14,4 +14,9 @@ enum Variant: string
             self::B => 'Variant B',
         };
     }
+
+    public function other(): self
+    {
+        return $this === self::A ? self::B : self::A;
+    }
 }

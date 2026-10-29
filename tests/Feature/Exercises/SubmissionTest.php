@@ -4,9 +4,9 @@ namespace Tests\Feature\Exercises;
 
 use App\Ai\Agents\ExerciseGenerator;
 use App\Ai\StudentInput;
-use App\Enums\Variant;
 use App\Models\Exercise;
 use App\Models\Submission;
+use App\Models\Topic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -18,12 +18,25 @@ class SubmissionTest extends TestCase
     use RefreshDatabase;
 
     private const array GENERATED = [
-        'concept' => 'Constructor',
+        'topic' => 'Classes',
         'question' => 'Welke constructor is juist?',
         'correct_code' => 'public function __construct(private int $total = 0) {}',
         'incorrect_code' => 'public function __construct(private int $total = "0") {}',
-        'reference_explanation' => 'Een int kan geen string als standaardwaarde hebben.',
+        'errors' => [[
+            'line' => 1,
+            'title' => 'Verkeerde standaardwaarde',
+            'hint' => 'Welk type heeft $total?',
+            'explanation' => 'Een int kan geen string als standaardwaarde hebben.',
+        ]],
     ];
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Topic::factory()->create(['name' => 'Classes']);
+        Topic::factory()->create(['name' => 'Loops']);
+    }
 
     public function test_a_student_sees_the_upload_form_and_only_their_own_submissions(): void
     {
@@ -57,14 +70,22 @@ class SubmissionTest extends TestCase
         $this->assertSame('Cart.php', $submission->filename);
         $this->assertSame("<?php\nclass Cart {}\n", $submission->code);
 
-        $this->assertTrue($exercise->user->is($user));
-        $this->assertTrue($exercise->submission->is($submission));
-        $this->assertSame('Constructor', $exercise->concept);
-        $this->assertSame(self::GENERATED['correct_code'], $exercise->variant($exercise->correct_variant));
-        $this->assertSame(self::GENERATED['incorrect_code'], $exercise->variant($exercise->correct_variant === Variant::A ? Variant::B : Variant::A));
-        $this->assertNull($exercise->chosen_variant);
+        $this->assertTrue($exercise->submission?->is($submission));
+        $this->assertSame('Classes', $exercise->topic->name);
+        $this->assertSame('Welke constructor is juist?', $exercise->title);
+        $this->assertSame(3, $exercise->stars);
+        $this->assertNull($exercise->published_at);
+        $this->assertSame(self::GENERATED['correct_code'], $exercise->correct_code);
+        $this->assertSame(self::GENERATED['incorrect_code'], $exercise->wrong_code);
 
-        ExerciseGenerator::assertPrompted(fn ($prompt) => $prompt->contains('class Cart {}'));
+        $error = $exercise->errors()->sole();
+        $this->assertSame(1, $error->line);
+        $this->assertSame('Verkeerde standaardwaarde', $error->title);
+        $this->assertSame('Welk type heeft $total?', $error->hint);
+        $this->assertSame('Een int kan geen string als standaardwaarde hebben.', $error->explanation);
+
+        ExerciseGenerator::assertPrompted(fn ($prompt) => $prompt->contains('class Cart {}')
+            && $prompt->contains('Kies het onderwerp uit: Classes, Loops.'));
     }
 
     public function test_pasted_code_can_be_submitted_without_a_file(): void
@@ -163,7 +184,7 @@ class SubmissionTest extends TestCase
 
     public function test_the_submission_is_kept_when_the_ai_fails(): void
     {
-        ExerciseGenerator::fake(fn () => throw new RuntimeException('LiteLLM is down'));
+        ExerciseGenerator::fake(fn () => throw new RuntimeException('Claude bridge is down'));
 
         $response = $this->actingAs(User::factory()->create())->post(route('submissions.store'), [
             'title' => 'Opdracht 3',
@@ -186,9 +207,8 @@ class SubmissionTest extends TestCase
         $this->actingAs($submission->user)->post(route('exercises.store', $submission));
 
         $exercise = Exercise::query()->sole();
-        $other = $exercise->correct_variant === Variant::A ? Variant::B : Variant::A;
-        $this->assertSame("public function a(): int\n{\n    return 1;\n}", $exercise->variant($exercise->correct_variant));
-        $this->assertSame("class B\n{\n    public \$x = 1;\n}", $exercise->variant($other));
+        $this->assertSame("public function a(): int\n{\n    return 1;\n}", $exercise->correct_code);
+        $this->assertSame("class B\n{\n    public \$x = 1;\n}", $exercise->wrong_code);
     }
 
     public function test_an_exercise_with_two_identical_variants_is_not_stored(): void
@@ -205,12 +225,12 @@ class SubmissionTest extends TestCase
     public function test_a_student_can_view_their_submission_but_not_someone_elses(): void
     {
         $submission = Submission::factory()->create(['title' => 'Mijn code']);
-        Exercise::factory()->for($submission)->create(['concept' => 'Loops']);
+        Exercise::factory()->forSubmission($submission)->create(['title' => 'Welke loop stopt op tijd?']);
 
         $this->actingAs($submission->user)->get(route('submissions.show', $submission))
             ->assertOk()
             ->assertSee('Mijn code')
-            ->assertSee('Loops');
+            ->assertSee('Welke loop stopt op tijd?');
 
         $this->actingAs(User::factory()->create())->get(route('submissions.show', $submission))
             ->assertForbidden();
@@ -220,13 +240,13 @@ class SubmissionTest extends TestCase
     {
         ExerciseGenerator::fake([self::GENERATED]);
         $submission = Submission::factory()->create();
-        Exercise::factory()->for($submission)->create(['concept' => 'Loops']);
+        Exercise::factory()->forSubmission($submission)->create(['title' => 'Welke loop stopt op tijd?']);
 
         $this->actingAs($submission->user)->post(route('exercises.store', $submission))
             ->assertRedirect();
 
         $this->assertSame(2, $submission->exercises()->count());
-        ExerciseGenerator::assertPrompted(fn ($prompt) => $prompt->contains('Kies een ander concept dan deze eerdere oefeningen: Loops.'));
+        ExerciseGenerator::assertPrompted(fn ($prompt) => $prompt->contains('Kies een ander concept dan deze eerdere oefeningen: Welke loop stopt op tijd?.'));
     }
 
     public function test_a_student_cannot_request_exercises_for_someone_elses_code(): void
@@ -238,5 +258,40 @@ class SubmissionTest extends TestCase
             ->assertForbidden();
 
         ExerciseGenerator::assertNeverPrompted();
+    }
+
+    public function test_line_numbers_of_errors_stay_within_the_wrong_code(): void
+    {
+        ExerciseGenerator::fake([['errors' => [
+            ['line' => 40, 'title' => 'Te ver', 'hint' => 'Hint', 'explanation' => 'Uitleg'],
+            ['line' => 0, 'title' => 'Te laag', 'hint' => 'Hint', 'explanation' => 'Uitleg'],
+            ['line' => 1, 'title' => 'Zonder uitleg', 'hint' => 'Hint', 'explanation' => ''],
+        ]] + self::GENERATED]);
+        $submission = Submission::factory()->create();
+
+        $this->actingAs($submission->user)->post(route('exercises.store', $submission));
+
+        $this->assertSame([1, 1], Exercise::query()->sole()->errors()->pluck('line')->all());
+    }
+
+    public function test_an_exercise_without_an_explained_error_is_not_stored(): void
+    {
+        ExerciseGenerator::fake([['errors' => []] + self::GENERATED]);
+        $submission = Submission::factory()->create();
+
+        $this->actingAs($submission->user)->post(route('exercises.store', $submission))
+            ->assertSessionHas('error');
+
+        $this->assertDatabaseEmpty('exercises');
+    }
+
+    public function test_an_unknown_topic_falls_back_to_an_existing_one(): void
+    {
+        ExerciseGenerator::fake([['topic' => 'Bestaat niet'] + self::GENERATED]);
+        $submission = Submission::factory()->create();
+
+        $this->actingAs($submission->user)->post(route('exercises.store', $submission));
+
+        $this->assertSame('Classes', Exercise::query()->sole()->topic->name);
     }
 }

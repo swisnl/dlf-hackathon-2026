@@ -10,9 +10,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('exercise_messages', function (Blueprint $table) {
+        Schema::create('attempt_messages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('exercise_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('attempt_id')->constrained()->cascadeOnDelete();
             $table->string('role', 16);
             $table->text('content');
             $table->timestamps();
@@ -24,6 +24,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('exercise_messages');
+        Schema::dropIfExists('attempt_messages');
     }
 };

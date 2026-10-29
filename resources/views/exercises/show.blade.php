@@ -1,20 +1,20 @@
 @php($variants = \App\Enums\Variant::cases())
-<x-layout :title="$exercise->concept">
+<x-layout :title="$exercise->topic->name">
     <a href="{{ route('submissions.show', $exercise->submission) }}" class="link text-sm">&larr; {{ $exercise->submission->title }}</a>
     <div class="mt-3 flex flex-col gap-2.5">
         <div class="flex flex-wrap gap-2">
-            <span class="chip bg-paars-licht text-paars-diep">{{ $exercise->concept }}</span>
-            @if ($exercise->isAnswered())
+            <span class="chip bg-paars-licht text-paars-diep">{{ $exercise->topic->name }}</span>
+            @if ($attempt)
                 <span class="chip bg-gevonden-licht text-[#075E5A]">Gemaakt</span>
             @endif
         </div>
-        <h1 class="font-display text-3xl font-extrabold tracking-tight sm:text-[40px] sm:leading-tight">{{ $exercise->question }}</h1>
-        @unless ($exercise->isAnswered())
+        <h1 class="font-display text-3xl font-extrabold tracking-tight sm:text-[40px] sm:leading-tight">{{ $exercise->title }}</h1>
+        @unless ($attempt)
             <p class="max-w-3xl text-lg text-inkt-zacht">Eén van deze twee versies klopt. Kies de goede en leg uit <b class="text-inkt">waarom</b>.</p>
         @endunless
     </div>
 
-    @if (! $exercise->isAnswered())
+    @if (! $attempt)
         <form method="POST" action="{{ route('exercises.answer', $exercise) }}" class="mt-6" data-ai="De AI bekijkt je antwoord…">
             @csrf
             <fieldset>
@@ -26,7 +26,7 @@
                                 <input type="radio" name="choice" value="{{ $variant->value }}" required @checked(old('choice') === $variant->value) class="size-[18px] accent-paars">
                                 <b class="font-display text-xl">{{ $variant->label() }}</b>
                             </span>
-                            <x-code :code="$exercise->variant($variant)" class="m-3" />
+                            <x-code :code="$exercise->code($variant)" class="m-3" />
                         </label>
                     @endforeach
                 </div>
@@ -46,38 +46,43 @@
     @else
         <div class="mt-6 grid gap-5 md:grid-cols-2">
             @foreach ($variants as $variant)
-                @php($isCorrect = $variant === $exercise->correct_variant)
+                @php($isCorrect = $exercise->side($variant) === \App\Enums\CodeSide::Correct)
                 <section @class(['card min-w-0 overflow-hidden border-2', 'border-gevonden' => $isCorrect])>
                     <div class="flex flex-wrap items-center gap-2 border-b border-rand px-4 py-3.5">
                         <b class="font-display text-xl">{{ $variant->label() }}</b>
                         @if ($isCorrect)
                             <span class="chip bg-gevonden-licht text-[#075E5A]">Juist</span>
                         @endif
-                        @if ($variant === $exercise->chosen_variant)
+                        @if ($attempt->chosen_side === $exercise->side($variant))
                             <span class="chip bg-paars-licht text-paars-diep">Jouw keuze</span>
                         @endif
                     </div>
-                    <x-code :code="$exercise->variant($variant)" class="m-3" />
+                    <x-code :code="$exercise->code($variant)" class="m-3" />
                 </section>
             @endforeach
         </div>
 
         <section class="card mt-5 flex flex-col gap-5 p-5 sm:p-7">
             <div class="flex flex-wrap items-center justify-between gap-3">
-                <h2 class="font-display text-[28px] font-extrabold">{{ $exercise->is_correct ? 'Scherp gezien!' : 'Bijna! De andere versie klopt.' }}</h2>
-                <span @class(['chip', 'bg-gevonden-licht text-[#075E5A]' => $exercise->is_correct, 'bg-gemist-licht text-gemist-tekst' => ! $exercise->is_correct]) title="Een inschatting van de AI">Score van de AI: {{ $exercise->score }}/10</span>
+                <h2 class="font-display text-[28px] font-extrabold">{{ $attempt->chosen_side === \App\Enums\CodeSide::Correct ? 'Scherp gezien!' : 'Bijna! De andere versie klopt.' }}</h2>
+                <span @class(['chip', 'bg-gevonden-licht text-[#075E5A]' => $attempt->stars > 0, 'bg-gemist-licht text-gemist-tekst' => $attempt->stars === 0]) title="Een inschatting van de AI">{{ $attempt->stars }} van {{ $exercise->stars }} sterren</span>
             </div>
             <div>
                 <h3 class="text-sm font-semibold text-inkt-zacht">Jouw uitleg</h3>
-                <p class="mt-1 whitespace-pre-line">{{ $exercise->explanation }}</p>
+                <p class="mt-1 whitespace-pre-line">{{ $attempt->explanation }}</p>
             </div>
             <div>
                 <h3 class="text-sm font-semibold text-inkt-zacht">Feedback</h3>
-                <p class="mt-1 whitespace-pre-line">{{ $exercise->feedback }}</p>
+                <p class="mt-1 whitespace-pre-line">{{ $attempt->feedback }}</p>
             </div>
             <div class="flex items-start gap-3 rounded-[14px] bg-ster-licht px-4 py-3.5">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8A6400" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="mt-0.5 shrink-0"><path d="M9 18h6M10 21h4"></path><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"></path></svg>
-                <p class="whitespace-pre-line leading-relaxed"><b>Waarom:</b> {{ $exercise->reference_explanation }}</p>
+                <div class="leading-relaxed">
+                    <b>Waarom:</b>
+                    @foreach ($exercise->errors as $error)
+                        <p class="whitespace-pre-line"><span class="font-semibold">{{ $error->title }} (regel {{ $error->line }} van {{ $exercise->variant(\App\Enums\CodeSide::Wrong)->label() }}).</span> {{ $error->explanation }}</p>
+                    @endforeach
+                </div>
             </div>
         </section>
 
@@ -85,8 +90,8 @@
             <h2 class="font-display text-2xl font-extrabold">Praat erover door</h2>
             <p class="text-inkt-zacht">Reageer op de feedback of stel een vraag over deze oefening.</p>
             <div class="mt-5 flex flex-col gap-3">
-                @foreach ($exercise->messages as $message)
-                    @if ($message->role === \App\Enums\ExerciseMessageRole::Student)
+                @foreach ($attempt->messages as $message)
+                    @if ($message->role === \App\Enums\AttemptMessageRole::Student)
                         <div class="flex justify-end">
                             <p class="max-w-[85%] rounded-2xl rounded-br-md bg-paars px-4 py-2.5 whitespace-pre-line text-white">{{ $message->content }}</p>
                         </div>

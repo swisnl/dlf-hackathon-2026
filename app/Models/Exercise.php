@@ -2,24 +2,24 @@
 
 namespace App\Models;
 
+use App\Enums\CodeSide;
 use App\Enums\Variant;
 use Database\Factories\ExerciseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property \App\Enums\Variant      $correct_variant
- * @property \App\Enums\Variant|null $chosen_variant
+ * @property \Illuminate\Support\Carbon|null $published_at
+ * @property string                          $correct_code
+ * @property string                          $wrong_code
+ * @property Topic                           $topic
  */
 #[Fillable(
-    ['concept', 'question', 'variant_a', 'variant_b', 'correct_variant', 'reference_explanation'],
-)]
-#[Hidden(
-    ['correct_variant', 'reference_explanation'],
+    ['topic_id', 'submission_id', 'title', 'stars', 'correct_code', 'wrong_code', 'published_at'],
 )]
 class Exercise extends Model
 {
@@ -34,23 +34,14 @@ class Exercise extends Model
     protected function casts(): array
     {
         return [
-            'correct_variant' => Variant::class,
-            'chosen_variant' => Variant::class,
-            'is_correct' => 'boolean',
-            'score' => 'integer',
-            'answered_at' => 'datetime',
+            'stars' => 'integer',
+            'published_at' => 'datetime',
         ];
     }
 
     /**
-     * @return BelongsTo<User, $this>
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
+     * The student's code the AI made this exercise about, if any.
+     *
      * @return BelongsTo<Submission, $this>
      */
     public function submission(): BelongsTo
@@ -59,20 +50,81 @@ class Exercise extends Model
     }
 
     /**
-     * @return HasMany<ExerciseMessage, $this>
+     * Which variant shows the correct code. The AI tends to put the correct code first,
+     * so the order is derived from the id and app key: stable per exercise, but not guessable.
      */
-    public function messages(): HasMany
+    public function correctVariant(): Variant
     {
-        return $this->hasMany(ExerciseMessage::class)->oldest('id');
+        return ord(hash_hmac('sha256', (string) $this->id, config()->string('app.key'), true)[0]) % 2 === 0 ? Variant::A : Variant::B;
     }
 
-    public function isAnswered(): bool
+    public function side(Variant $variant): CodeSide
     {
-        return $this->answered_at !== null;
+        return $variant === $this->correctVariant() ? CodeSide::Correct : CodeSide::Wrong;
     }
 
-    public function variant(Variant $variant): string
+    public function variant(CodeSide $side): Variant
     {
-        return $variant === Variant::A ? $this->variant_a : $this->variant_b;
+        return $side === CodeSide::Correct ? $this->correctVariant() : $this->correctVariant()->other();
+    }
+
+    public function code(Variant $variant): string
+    {
+        return $this->side($variant) === CodeSide::Correct ? $this->correct_code : $this->wrong_code;
+    }
+
+    /**
+     * What is wrong with the wrong code, as one text for the AI.
+     */
+    public function referenceExplanation(): string
+    {
+        return $this->errors
+            ->map(fn (ExerciseError $error): string => "Regel {$error->line} van de foute versie, {$error->title}: {$error->explanation}")
+            ->implode("\n");
+    }
+
+    /**
+     * @return BelongsTo<Topic, $this>
+     */
+    public function topic(): BelongsTo
+    {
+        return $this->belongsTo(Topic::class);
+    }
+
+    /**
+     * @return HasMany<ExerciseError, $this>
+     */
+    public function errors(): HasMany
+    {
+        return $this->hasMany(ExerciseError::class);
+    }
+
+    /**
+     * @return HasMany<Attempt, $this>
+     */
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(Attempt::class);
+    }
+
+    /**
+     * @return HasMany<Progress, $this>
+     */
+    public function progress(): HasMany
+    {
+        return $this->hasMany(Progress::class);
+    }
+
+    /**
+     * The students who have progress on this exercise.
+     *
+     * @return BelongsToMany<User, $this, Progress>
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class)
+            ->using(Progress::class)
+            ->withPivot(['status', 'best_stars', 'completed_at'])
+            ->withTimestamps();
     }
 }

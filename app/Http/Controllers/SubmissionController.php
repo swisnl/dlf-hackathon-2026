@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Submission;
-use App\Models\User;
 use App\Services\ExerciseService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -73,15 +72,7 @@ class SubmissionController extends Controller
 
         return view('submissions.show', [
             'submission' => $submission,
-            'exercises' => $submission->exercises()->latest('id')->get(),
+            'exercises' => $submission->exercises()->with('topic', 'attempts')->latest('id')->get(),
         ]);
-    }
-
-    private function user(Request $request): User
-    {
-        $user = $request->user();
-        assert($user instanceof User);
-
-        return $user;
     }
 }

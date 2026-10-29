@@ -8,13 +8,15 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property \App\Enums\CodeSide|null $chosen_side
  * @property array<int, int>          $selected_lines
+ * @property Exercise                 $exercise
  */
 #[Fillable(
-    ['user_id', 'exercise_id', 'number', 'chosen_side', 'selected_lines', 'found', 'wrong', 'stars', 'gave_up'],
+    ['user_id', 'exercise_id', 'number', 'chosen_side', 'selected_lines', 'found', 'wrong', 'stars', 'gave_up', 'explanation', 'feedback'],
 )]
 class Attempt extends Model
 {
@@ -53,5 +55,15 @@ class Attempt extends Model
     public function exercise(): BelongsTo
     {
         return $this->belongsTo(Exercise::class);
+    }
+
+    /**
+     * The conversation with the AI tutor about this attempt.
+     *
+     * @return HasMany<AttemptMessage, $this>
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(AttemptMessage::class)->oldest('id');
     }
 }

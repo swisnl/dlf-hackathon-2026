@@ -8,9 +8,12 @@ use Illuminate\Auth\Access\Response;
 
 class ExercisePolicy
 {
+    /**
+     * Students only see the exercises the AI made about their own code.
+     */
     public function view(User $user, Exercise $exercise): bool
     {
-        return $exercise->user_id === $user->id;
+        return $exercise->submission !== null && $exercise->submission->user_id === $user->id;
     }
 
     public function answer(User $user, Exercise $exercise): Response
@@ -19,7 +22,7 @@ class ExercisePolicy
             return Response::denyAsNotFound();
         }
 
-        return $exercise->isAnswered()
+        return $exercise->attempts()->whereBelongsTo($user)->exists()
             ? Response::deny('Deze oefening heb je al beantwoord.')
             : Response::allow();
     }
@@ -30,7 +33,7 @@ class ExercisePolicy
             return Response::denyAsNotFound();
         }
 
-        return $exercise->isAnswered()
+        return $exercise->attempts()->whereBelongsTo($user)->exists()
             ? Response::allow()
             : Response::deny('Beantwoord eerst de oefening.');
     }

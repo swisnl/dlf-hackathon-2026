@@ -3,7 +3,8 @@
 namespace App\Ai\Agents;
 
 use App\Ai\StudentInput;
-use App\Models\Exercise;
+use App\Enums\Variant;
+use App\Models\Attempt;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Attributes\Timeout;
 use Laravel\Ai\Contracts\Agent;
@@ -19,7 +20,7 @@ class AnswerAssessor implements Agent, HasStructuredOutput
 {
     use Promptable;
 
-    public function __construct(public Exercise $exercise)
+    public function __construct(public Attempt $attempt)
     {
     }
 
@@ -47,24 +48,25 @@ class AnswerAssessor implements Agent, HasStructuredOutput
 
     public function toPrompt(): string
     {
-        $exercise = $this->exercise;
+        $exercise = $this->attempt->exercise;
+        $chosen = $this->attempt->chosen_side !== null ? $exercise->variant($this->attempt->chosen_side)->label() : '';
 
         return <<<TXT
-            Concept: {$exercise->concept}
-            Vraag: {$exercise->question}
+            Onderwerp: {$exercise->topic->name}
+            Vraag: {$exercise->title}
 
             Variant A (afgeleid van de code van de student):
-            {$this->wrap('variant_a', $exercise->variant_a)}
+            {$this->wrap('variant_a', $exercise->code(Variant::A))}
 
             Variant B (afgeleid van de code van de student):
-            {$this->wrap('variant_b', $exercise->variant_b)}
+            {$this->wrap('variant_b', $exercise->code(Variant::B))}
 
-            Juiste variant: {$exercise->correct_variant->label()}
-            Uitleg van de docent: {$exercise->reference_explanation}
+            Juiste variant: {$exercise->correctVariant()->label()}
+            Uitleg van de docent: {$exercise->referenceExplanation()}
 
-            Keuze van de student: {$exercise->chosen_variant?->label()}
+            Keuze van de student: {$chosen}
             Uitleg van de student:
-            {$this->wrap('uitleg', $exercise->explanation)}
+            {$this->wrap('uitleg', $this->attempt->explanation)}
             TXT;
     }
 

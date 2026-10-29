@@ -2,7 +2,7 @@
 
 namespace App\Enums;
 
-enum ExerciseMessageRole: string
+enum AttemptMessageRole: string
 {
     case Student = 'student';
     case Tutor = 'tutor';

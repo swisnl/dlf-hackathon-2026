@@ -15,11 +15,11 @@
     @forelse ($exercises as $exercise)
         <a href="{{ route('exercises.show', $exercise) }}" class="card mt-3 flex flex-wrap items-center justify-between gap-3 p-5 transition-colors hover:border-paars">
             <span class="min-w-0">
-                <span class="block text-lg font-bold">{{ $exercise->concept }}</span>
-                <span class="block text-inkt-zacht">{{ $exercise->question }}</span>
+                <span class="block text-lg font-bold">{{ $exercise->topic->name }}</span>
+                <span class="block text-inkt-zacht">{{ $exercise->title }}</span>
             </span>
-            @if ($exercise->isAnswered())
-                <span class="chip shrink-0 bg-gevonden-licht text-[#075E5A]">Gemaakt · {{ $exercise->score }}/10</span>
+            @if ($attempt = $exercise->attempts->first())
+                <span class="chip shrink-0 bg-gevonden-licht text-[#075E5A]">Gemaakt · {{ $attempt->stars }} van {{ $exercise->stars }} sterren</span>
             @else
                 <span class="chip shrink-0 bg-paars-licht text-paars-diep">Nieuw</span>
             @endif

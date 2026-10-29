@@ -7,7 +7,9 @@ use App\Http\Controllers\ExerciseMessageController;
 use App\Http\Controllers\SubmissionController;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/submissions');
+Route::get('/', function () {
+    return Inertia::render('Home');
+});
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
