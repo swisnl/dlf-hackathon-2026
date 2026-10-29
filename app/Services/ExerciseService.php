@@ -28,8 +28,8 @@ class ExerciseService
 
         // The AI tends to put the correct answer first, so shuffle the variants ourselves.
         $correct = Lottery::odds(1, 2)->winner(fn () => Variant::A)->loser(fn () => Variant::B)->choose();
-        $correctCode = $this->string($response['correct_code']);
-        $incorrectCode = $this->string($response['incorrect_code']);
+        $correctCode = $this->code($response['correct_code']);
+        $incorrectCode = $this->code($response['incorrect_code']);
 
         if ($correctCode === '' || $correctCode === $incorrectCode) {
             throw new RuntimeException('The AI generated an exercise without two different variants.');
@@ -80,6 +80,28 @@ class ExerciseService
         $response = (new ExerciseTutor($exercise))->prompt($content);
 
         return $exercise->messages()->create(['role' => ExerciseMessageRole::Tutor, 'content' => trim($response->text)]);
+    }
+
+    /**
+     * Snippets taken from a class come back with the first line unindented and the
+     * rest indented one level deeper; remove that extra indentation.
+     */
+    private function code(mixed $value): string
+    {
+        $lines = explode("\n", str_replace("\r\n", "\n", rtrim(is_scalar($value) ? (string) $value : '')));
+        $lines[0] = ltrim($lines[0]);
+
+        $indents = array_map(
+            fn (string $line): int => strlen($line) - strlen(ltrim($line, ' ')),
+            array_filter(array_slice($lines, 1), fn (string $line): bool => trim($line) !== ''),
+        );
+        $indent = $indents === [] ? 0 : min($indents);
+
+        foreach (array_slice($lines, 1, preserve_keys: true) as $index => $line) {
+            $lines[$index] = substr($line, min($indent, strlen($line)));
+        }
+
+        return trim(implode("\n", $lines), "\n");
     }
 
     private function string(mixed $value): string

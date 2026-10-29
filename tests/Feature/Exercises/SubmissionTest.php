@@ -139,6 +139,22 @@ class SubmissionTest extends TestCase
         $this->assertDatabaseEmpty('exercises');
     }
 
+    public function test_extra_indentation_of_generated_code_is_removed(): void
+    {
+        ExerciseGenerator::fake([[
+            'correct_code' => "public function a(): int\n    {\n        return 1;\n    }",
+            'incorrect_code' => "class B\n{\n    public \$x = 1;\n}\n",
+        ] + self::GENERATED]);
+        $submission = Submission::factory()->create();
+
+        $this->actingAs($submission->user)->post(route('exercises.store', $submission));
+
+        $exercise = Exercise::query()->sole();
+        $other = $exercise->correct_variant === Variant::A ? Variant::B : Variant::A;
+        $this->assertSame("public function a(): int\n{\n    return 1;\n}", $exercise->variant($exercise->correct_variant));
+        $this->assertSame("class B\n{\n    public \$x = 1;\n}", $exercise->variant($other));
+    }
+
     public function test_an_exercise_with_two_identical_variants_is_not_stored(): void
     {
         ExerciseGenerator::fake([['incorrect_code' => self::GENERATED['correct_code']] + self::GENERATED]);
