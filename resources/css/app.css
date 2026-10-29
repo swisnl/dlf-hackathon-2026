@@ -4,6 +4,24 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-display: var(--font-bricolage-grotesque), ui-sans-serif, system-ui, sans-serif;
+    --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+    --color-purple-600: #9333ea;
+    --color-purple-800: #6b21a8;
+    --color-star: #ffb800;
+    --color-found: #0b7a75;
+    --color-missed: #c25e00;
+    --color-paper: #fff8f2;
+    --color-ink: #1d1a2f;
+    --color-ink-muted: #4a4660;
+    --color-line: #d8d0c8;
+}
+
+@layer base {
+    body {
+        @apply bg-paper font-sans text-ink antialiased;
+    }
 }
