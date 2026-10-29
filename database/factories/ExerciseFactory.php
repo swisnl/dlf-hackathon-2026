@@ -2,8 +2,9 @@
 
 namespace Database\Factories;
 
+use App\Enums\Variant;
 use App\Models\Exercise;
-use App\Models\Topic;
+use App\Models\Submission;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,46 +19,30 @@ class ExerciseFactory extends Factory
      */
     public function definition(): array
     {
-        $correctCode = <<<'PHP'
-            class Post extends Model
-            {
-                public function comments(): HasMany
-                {
-                    return $this->hasMany(Comment::class);
-                }
-            }
-            PHP;
-
-        $wrongCode = <<<'PHP'
-            class Post extends Model
-            {
-                public function comments(): HasMany
-                {
-                    return $this->belongsTo(Comment::class);
-                }
-            }
-            PHP;
-
-        /** @var list<string> $words */
-        $words = fake()->words(3);
-
         return [
-            'topic_id' => Topic::factory(),
-            'title' => ucfirst(implode(' ', $words)),
-            'stars' => fake()->numberBetween(1, 3),
-            'correct_code' => $correctCode,
-            'wrong_code' => $wrongCode,
-            'published_at' => now(),
+            'submission_id' => Submission::factory(),
+            'user_id' => fn (array $attributes) => Submission::query()->whereKey($attributes['submission_id'])->value('user_id'),
+            'concept' => 'Private properties',
+            'question' => 'Welke variant van de class Cart is juist?',
+            'variant_a' => "class Cart\n{\n    private array \$items = [];\n}",
+            'variant_b' => "class Cart\n{\n    private array \$items;\n}",
+            'correct_variant' => Variant::A,
+            'reference_explanation' => 'In variant B is $items niet geïnitialiseerd.',
         ];
     }
 
     /**
-     * Indicate that the exercise is not published yet.
+     * Indicate that the student already answered the exercise.
      */
-    public function unpublished(): static
+    public function answered(Variant $choice = Variant::A): static
     {
         return $this->state(fn (array $attributes) => [
-            'published_at' => null,
+            'chosen_variant' => $choice,
+            'explanation' => 'Omdat de array een beginwaarde heeft.',
+            'is_correct' => $choice === ($attributes['correct_variant'] ?? Variant::A),
+            'score' => 8,
+            'feedback' => 'Goed gedaan.',
+            'answered_at' => now(),
         ]);
     }
 }

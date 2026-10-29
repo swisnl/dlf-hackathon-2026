@@ -2,22 +2,24 @@
 
 namespace App\Models;
 
-use App\Enums\ProgressStatus;
+use App\Enums\Variant;
 use Database\Factories\ExerciseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Scope;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * @property \Illuminate\Support\Carbon|null $published_at
+ * @property \App\Enums\Variant      $correct_variant
+ * @property \App\Enums\Variant|null $chosen_variant
  */
 #[Fillable(
-    ['topic_id', 'title', 'stars', 'correct_code', 'wrong_code', 'published_at'],
+    ['concept', 'question', 'variant_a', 'variant_b', 'correct_variant', 'reference_explanation'],
+)]
+#[Hidden(
+    ['correct_variant', 'reference_explanation'],
 )]
 class Exercise extends Model
 {
@@ -32,101 +34,45 @@ class Exercise extends Model
     protected function casts(): array
     {
         return [
-            'stars' => 'integer',
-            'published_at' => 'datetime',
+            'correct_variant' => Variant::class,
+            'chosen_variant' => Variant::class,
+            'is_correct' => 'boolean',
+            'score' => 'integer',
+            'answered_at' => 'datetime',
         ];
     }
 
     /**
-     * Only exercises that students can see.
-     *
-     * @param Builder<$this> $query
+     * @return BelongsTo<User, $this>
      */
-    #[Scope]
-    protected function published(Builder $query): void
+    public function user(): BelongsTo
     {
-        $query->whereNotNull('published_at');
+        return $this->belongsTo(User::class);
     }
 
     /**
-     * Load only the given student's progress, so progressOfStudent() and statusOfStudent() can use it.
-     *
-     * @param Builder<$this> $query
+     * @return BelongsTo<Submission, $this>
      */
-    #[Scope]
-    protected function withProgressOf(Builder $query, User $user): void
+    public function submission(): BelongsTo
     {
-        $query->with(['progress' => fn (HasMany $query) => $query->whereBelongsTo($user)]);
+        return $this->belongsTo(Submission::class);
     }
 
     /**
-     * The student's progress, loaded through withProgressOf().
+     * @return HasMany<ExerciseMessage, $this>
      */
-    public function progressOfStudent(): ?Progress
+    public function messages(): HasMany
     {
-        return $this->progress->first();
+        return $this->hasMany(ExerciseMessage::class)->oldest('id');
     }
 
-    /**
-     * The student's status, loaded through withProgressOf(); no progress yet means it is new.
-     */
-    public function statusOfStudent(): ProgressStatus
+    public function isAnswered(): bool
     {
-        return $this->progressOfStudent()->status ?? ProgressStatus::New;
+        return $this->answered_at !== null;
     }
 
-    /**
-     * @return BelongsTo<Topic, $this>
-     */
-    public function topic(): BelongsTo
+    public function variant(Variant $variant): string
     {
-        return $this->belongsTo(Topic::class);
-    }
-
-    /**
-     * @return HasMany<ExerciseError, $this>
-     */
-    public function errors(): HasMany
-    {
-        return $this->hasMany(ExerciseError::class);
-    }
-
-    /**
-     * The lines of the wrong class that contain an error; every exercise has at least one.
-     *
-     * @return list<int>
-     */
-    public function errorLines(): array
-    {
-        return array_values($this->errors->map(fn (ExerciseError $error): int => $error->line)->all());
-    }
-
-    /**
-     * @return HasMany<Attempt, $this>
-     */
-    public function attempts(): HasMany
-    {
-        return $this->hasMany(Attempt::class);
-    }
-
-    /**
-     * @return HasMany<Progress, $this>
-     */
-    public function progress(): HasMany
-    {
-        return $this->hasMany(Progress::class);
-    }
-
-    /**
-     * The students who have progress on this exercise.
-     *
-     * @return BelongsToMany<User, $this, Progress>
-     */
-    public function users(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class)
-            ->using(Progress::class)
-            ->withPivot(['status', 'best_stars', 'completed_at'])
-            ->withTimestamps();
+        return $variant === Variant::A ? $this->variant_a : $this->variant_b;
     }
 }
