@@ -125,12 +125,25 @@ class ClaudeCodeGateway implements StepTextGateway
             fn (Message $message): string => sprintf(
                 "<message role=\"%s\">\n%s\n</message>",
                 $message->role === MessageRole::Assistant ? 'assistant' : 'user',
-                $message->content,
+                self::withoutTranscriptTags((string) $message->content),
             ),
             $messages,
         );
 
         return "This is the conversation so far. You are the assistant; reply to the last user message.\n\n"
             ."<conversation>\n".implode("\n", $transcript)."\n</conversation>";
+    }
+
+    /**
+     * Remove the transcript's own tags from a message, so it cannot end the message or conversation early.
+     */
+    private static function withoutTranscriptTags(string $content): string
+    {
+        do {
+            $previous = $content;
+            $content = preg_replace('/<\s*\/?\s*(?:message|conversation)\b[^>]*>/i', '', $content) ?? '';
+        } while ($content !== $previous);
+
+        return $content;
     }
 }

@@ -12,8 +12,14 @@ final class StudentInput
 
     public static function wrap(string $tag, ?string $text): string
     {
-        // Strip our own tags from the input so a student cannot close the block early.
-        $text = preg_replace('/<\s*\/?\s*student_[a-z_]*\s*>/i', '', (string) $text) ?? '';
+        // Strip our own tags from the input so a student cannot close the block early. Repeat until nothing
+        // changes, so a tag hidden inside another one (<stu<student_x>dent_code>) cannot survive either.
+        $text = (string) $text;
+
+        do {
+            $previous = $text;
+            $text = preg_replace('/<\s*\/?\s*student_[a-z_]*\s*>/i', '', $text) ?? '';
+        } while ($text !== $previous);
 
         return "<student_{$tag}>\n{$text}\n</student_{$tag}>";
     }
