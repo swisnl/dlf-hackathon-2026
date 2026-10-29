@@ -68,6 +68,7 @@ class AdminPanelProvider extends PanelProvider
                     ? view('filament.user-role-badge', ['role' => $user->role])
                     : null,
             )
+            ->favicon(asset('favicon.svg'))
             ->colors([
                 'primary' => Color::Purple,
                 'secondary' => Color::Neutral,
