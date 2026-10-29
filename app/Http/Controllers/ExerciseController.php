@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\CodeSide;
 use App\Enums\Variant;
 use App\Exceptions\ExerciseAlreadyAnswered;
 use App\Models\Exercise;
 use App\Models\Submission;
 use App\Services\ExerciseService;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 class ExerciseController extends Controller
@@ -30,13 +32,38 @@ class ExerciseController extends Controller
         return redirect()->route('exercises.show', $exercise);
     }
 
-    public function show(Request $request, Exercise $exercise): View
+    public function show(Request $request, Exercise $exercise): Response
     {
         Gate::authorize('view', $exercise);
 
-        return view('exercises.show', [
-            'exercise' => $exercise->load('submission', 'topic', 'errors'),
-            'attempt' => $exercise->attempts()->whereBelongsTo($this->user($request))->with('messages')->first(),
+        $attempt = $exercise->attempts()->whereBelongsTo($this->user($request))->with('messages')->first();
+        $submission = $exercise->submission;
+
+        // Which variant is correct, the errors and the feedback only go to the page once the student answered.
+        return Inertia::render('Exercises/Show', [
+            'exercise' => [
+                'id' => $exercise->id,
+                'title' => $exercise->title,
+                'topic' => $exercise->topic->name,
+                'stars' => $exercise->stars,
+                'submission' => $submission?->only('id', 'title'),
+            ],
+            'variants' => array_map(fn (Variant $variant): array => [
+                'value' => $variant->value,
+                'label' => $variant->label(),
+                'code' => $exercise->code($variant),
+                'correct' => $attempt !== null ? $exercise->side($variant) === CodeSide::Correct : null,
+            ], Variant::cases()),
+            'attempt' => $attempt === null ? null : [
+                'chosen' => $attempt->chosen_side !== null ? $exercise->variant($attempt->chosen_side)->value : null,
+                'correct' => $attempt->chosen_side === CodeSide::Correct,
+                'stars' => $attempt->stars,
+                'explanation' => $attempt->explanation,
+                'feedback' => $attempt->feedback,
+                'wrong_variant' => $exercise->variant(CodeSide::Wrong)->label(),
+                'errors' => $exercise->errors()->orderBy('line')->get()->map->only('id', 'line', 'title', 'explanation'),
+                'messages' => $attempt->messages->map->only('id', 'role', 'content'),
+            ],
         ]);
     }
 

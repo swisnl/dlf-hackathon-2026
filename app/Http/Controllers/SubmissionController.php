@@ -2,15 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Exercise;
 use App\Models\Submission;
 use App\Services\ExerciseService;
-use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 class SubmissionController extends Controller
@@ -23,10 +25,17 @@ class SubmissionController extends Controller
         'kt', 'swift', 'html', 'css', 'scss', 'sql', 'json', 'txt',
     ];
 
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
-        return view('submissions.index', [
-            'submissions' => $this->user($request)->submissions()->withCount('exercises')->latest()->get(),
+        return Inertia::render('Submissions/Index', [
+            'submissions' => $this->user($request)->submissions()->withCount('exercises')->latest()->get()
+                ->map(fn (Submission $submission): array => [
+                    'id' => $submission->id,
+                    'title' => $submission->title,
+                    'filename' => $submission->filename,
+                    'exercises_count' => $submission->exercises_count,
+                    'created_at' => $submission->created_at?->format('d-m-Y'),
+                ]),
             'extensions' => self::EXTENSIONS,
         ]);
     }
@@ -66,13 +75,20 @@ class SubmissionController extends Controller
         return redirect()->route('exercises.show', $exercise);
     }
 
-    public function show(Submission $submission): View
+    public function show(Submission $submission): Response
     {
         Gate::authorize('view', $submission);
 
-        return view('submissions.show', [
-            'submission' => $submission,
-            'exercises' => $submission->exercises()->with('topic', 'attempts')->latest('id')->get(),
+        return Inertia::render('Submissions/Show', [
+            'submission' => $submission->only('id', 'title', 'filename', 'code'),
+            'exercises' => $submission->exercises()->with('topic', 'attempts')->latest('id')->get()
+                ->map(fn (Exercise $exercise): array => [
+                    'id' => $exercise->id,
+                    'topic' => $exercise->topic->name,
+                    'title' => $exercise->title,
+                    'stars' => $exercise->stars,
+                    'earned_stars' => $exercise->attempts->first()?->stars,
+                ]),
         ]);
     }
 }

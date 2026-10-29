@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class AuthTest extends TestCase
@@ -22,7 +23,7 @@ class AuthTest extends TestCase
         }
 
         $this->actingAs(User::factory()->create())->get(route('submissions.index'))
-            ->assertOk()->assertSee('eigenwijs');
+            ->assertOk()->assertInertia(fn (Assert $page) => $page->component('Submissions/Index'));
     }
 
     public function test_a_student_can_register(): void
@@ -56,6 +57,26 @@ class AuthTest extends TestCase
 
         $this->post('/login', ['email' => $user->email, 'password' => 'fout'])
             ->assertSessionHasErrors('email');
+        $this->assertGuest();
+    }
+
+    public function test_the_home_page_is_the_entry_for_students(): void
+    {
+        $this->get('/')->assertOk()->assertInertia(fn (Assert $page) => $page->component('Home')->where('auth.user', null));
+
+        $this->actingAs(User::factory()->create(['name' => 'Sam de Vries']))->get('/')
+            ->assertInertia(fn (Assert $page) => $page->component('Home')
+                ->where('auth.user.name', 'Sam de Vries')
+                ->where('auth.user.initials', 'SD'));
+    }
+
+    public function test_logging_out_from_an_inertia_page_does_a_full_visit_to_the_login_page(): void
+    {
+        $this->actingAs(User::factory()->create())
+            ->post(route('logout'), [], ['X-Inertia' => 'true'])
+            ->assertStatus(409)
+            ->assertHeader('X-Inertia-Location', route('login'));
+
         $this->assertGuest();
     }
 }

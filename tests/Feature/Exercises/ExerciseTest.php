@@ -13,6 +13,7 @@ use App\Models\Exercise;
 use App\Models\ExerciseError;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Ai\Exceptions\ProviderConnectionException;
 use RuntimeException;
 use Tests\TestCase;
@@ -27,11 +28,14 @@ class ExerciseTest extends TestCase
 
         $this->actingAs($this->owner($exercise))->get(route('exercises.show', $exercise))
             ->assertOk()
-            ->assertSee($exercise->title)
-            ->assertSee('Variant A')
-            ->assertSee('Variant B')
-            ->assertSee('Leg uit waarom')
-            ->assertDontSee($exercise->errors->firstOrFail()->explanation);
+            ->assertInertia(fn (Assert $page) => $page->component('Exercises/Show')
+                ->where('exercise.title', $exercise->title)
+                ->where('variants.0.label', 'Variant A')
+                ->where('variants.1.label', 'Variant B')
+                // Before answering, the page must not know which variant is correct.
+                ->where('variants.0.correct', null)
+                ->where('variants.1.correct', null)
+                ->where('attempt', null));
     }
 
     public function test_a_student_cannot_see_someone_elses_exercise(): void
@@ -82,11 +86,13 @@ class ExerciseTest extends TestCase
 
         $this->actingAs($student)->get(route('exercises.show', $exercise))
             ->assertOk()
-            ->assertSee('Scherp gezien!')
-            ->assertSee('Sterke uitleg!')
-            ->assertSee('3 van 3 sterren')
-            ->assertSee($exercise->errors->firstOrFail()->explanation)
-            ->assertSee('Praat erover door');
+            ->assertInertia(fn (Assert $page) => $page->component('Exercises/Show')
+                ->where('attempt.correct', true)
+                ->where('attempt.chosen', $correct->value)
+                ->where('attempt.stars', 3)
+                ->where('attempt.feedback', 'Sterke uitleg!')
+                ->where('attempt.errors.0.explanation', $exercise->errors->firstOrFail()->explanation)
+                ->where('variants.'.($correct->value === 'a' ? 0 : 1).'.correct', true));
     }
 
     public function test_an_injected_explanation_is_marked_as_data_and_does_not_set_the_score(): void
@@ -123,7 +129,7 @@ class ExerciseTest extends TestCase
         $this->assertSame(CodeSide::Wrong, Attempt::query()->sole()->chosen_side);
 
         $this->actingAs($this->owner($exercise))->get(route('exercises.show', $exercise))
-            ->assertSee('Bijna! De andere versie klopt.');
+            ->assertInertia(fn (Assert $page) => $page->where('attempt.correct', false));
     }
 
     public function test_the_score_is_clamped_between_0_and_10(): void
@@ -265,7 +271,9 @@ class ExerciseTest extends TestCase
         ExerciseTutor::assertPrompted(fn ($prompt) => $prompt->contains('Waarom moet de array een beginwaarde hebben?'));
 
         $this->actingAs($this->owner($exercise))->get(route('exercises.show', $exercise))
-            ->assertSee('Wat gebeurt er als $items leeg is?');
+            ->assertInertia(fn (Assert $page) => $page->has('attempt.messages', 4)
+                ->where('attempt.messages.3.role', 'tutor')
+                ->where('attempt.messages.3.content', 'Goede vraag! Wat gebeurt er als $items leeg is?'));
     }
 
     public function test_the_tutor_gets_the_earlier_conversation_as_history(): void

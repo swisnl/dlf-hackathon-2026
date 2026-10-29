@@ -10,6 +10,7 @@ use App\Models\Topic;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Inertia\Testing\AssertableInertia as Assert;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -46,9 +47,11 @@ class SubmissionTest extends TestCase
 
         $this->actingAs($user)->get(route('submissions.index'))
             ->assertOk()
-            ->assertSee('Upload je code')
-            ->assertSee('Mijn winkelmandje')
-            ->assertDontSee('Code van iemand anders');
+            ->assertInertia(fn (Assert $page) => $page->component('Submissions/Index')
+                ->has('submissions', 1)
+                ->where('submissions.0.title', 'Mijn winkelmandje')
+                ->where('submissions.0.exercises_count', 0)
+                ->has('extensions'));
     }
 
     public function test_uploading_a_file_stores_it_and_generates_an_exercise(): void
@@ -229,8 +232,11 @@ class SubmissionTest extends TestCase
 
         $this->actingAs($submission->user)->get(route('submissions.show', $submission))
             ->assertOk()
-            ->assertSee('Mijn code')
-            ->assertSee('Welke loop stopt op tijd?');
+            ->assertInertia(fn (Assert $page) => $page->component('Submissions/Show')
+                ->where('submission.title', 'Mijn code')
+                ->has('exercises', 1)
+                ->where('exercises.0.title', 'Welke loop stopt op tijd?')
+                ->where('exercises.0.earned_stars', null));
 
         $this->actingAs(User::factory()->create())->get(route('submissions.show', $submission))
             ->assertForbidden();
