@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ProgressStatus;
 use Database\Factories\ExerciseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -45,6 +46,33 @@ class Exercise extends Model
     protected function published(Builder $query): void
     {
         $query->whereNotNull('published_at');
+    }
+
+    /**
+     * Load only the given student's progress, so progressOfStudent() and statusOfStudent() can use it.
+     *
+     * @param Builder<$this> $query
+     */
+    #[Scope]
+    protected function withProgressOf(Builder $query, User $user): void
+    {
+        $query->with(['progress' => fn (HasMany $query) => $query->whereBelongsTo($user)]);
+    }
+
+    /**
+     * The student's progress, loaded through withProgressOf().
+     */
+    public function progressOfStudent(): ?Progress
+    {
+        return $this->progress->first();
+    }
+
+    /**
+     * The student's status, loaded through withProgressOf(); no progress yet means it is new.
+     */
+    public function statusOfStudent(): ProgressStatus
+    {
+        return $this->progressOfStudent()->status ?? ProgressStatus::New;
     }
 
     /**

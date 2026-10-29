@@ -6,6 +6,8 @@ import BadgeMedal from '@/Components/BadgeMedal.vue'
 import Owl from '@/Components/Owl.vue'
 import PrimaryButton from '@/Components/PrimaryButton.vue'
 import StarIcon from '@/Components/StarIcon.vue'
+import StatusChip from '@/Components/StatusChip.vue'
+import TopicChip from '@/Components/TopicChip.vue'
 
 const props = defineProps({
     badges: { type: Array, required: true },
@@ -20,11 +22,6 @@ const user = computed(() => usePage().props.auth.user)
 const firstName = computed(() => user.value.name.trim().split(/\s+/)[0])
 const earnedBadges = computed(() => props.badges.filter(badge => badge.earned).length)
 const starsToGo = computed(() => props.nextBadge.threshold - user.value.stars)
-
-const statusChips = {
-    retry: 'bg-[#FFF0DC] text-[#8A4300]',
-    new: 'bg-purple-100 text-purple-800',
-}
 
 const tips = [
     'Lees eerst beide classes helemaal door voordat je klikt. Wat zou jij anders hebben geschreven?',
@@ -125,14 +122,9 @@ const tip = tips[Math.floor(Math.random() * tips.length)]
                 >
                     <div class="flex min-w-0 flex-[1_1_260px] flex-col gap-1.5">
                         <b class="text-[17px]">{{ exercise.title }}</b>
-                        <div class="flex flex-wrap gap-2 text-[13px] font-semibold">
-                            <span
-                                class="rounded-full px-2.5 py-1"
-                                :style="{ backgroundColor: exercise.topic.color, color: exercise.topic.text_color }"
-                            >
-                                {{ exercise.topic.name }}
-                            </span>
-                            <span class="rounded-full px-2.5 py-1" :class="statusChips[exercise.status]">{{ exercise.statusLabel }}</span>
+                        <div class="flex flex-wrap gap-2">
+                            <TopicChip :topic="exercise.topic" />
+                            <StatusChip :status="exercise.status" :label="exercise.statusLabel" />
                         </div>
                     </div>
 
