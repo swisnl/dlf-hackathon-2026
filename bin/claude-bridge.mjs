@@ -21,6 +21,8 @@ const HOST = '127.0.0.1';
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 const MAX_TIMEOUT_SECONDS = 600;
 const MAX_CONCURRENT = 4;
+// How long Claude Code gets to stop after SIGTERM before it is killed.
+const KILL_GRACE_MS = 5000;
 
 const config = { ...readDotEnv(join(dirname(fileURLToPath(import.meta.url)), '..', '.env')), ...process.env };
 const token = config.CLAUDE_BRIDGE_TOKEN ?? '';
@@ -61,9 +63,17 @@ createServer(async (req, res) => {
         return send(400, { error: e.message });
     }
 
+    // Stop Claude Code when the client goes away (for example a PHP timeout), so it does not keep a slot.
+    const abort = new AbortController();
+    res.on('close', () => {
+        if (!res.writableEnded) {
+            abort.abort();
+        }
+    });
+
     running++;
     try {
-        send(200, await runClaude(input));
+        send(200, await runClaude(input, abort.signal));
     } catch (e) {
         send(502, { error: e.message });
     } finally {
@@ -124,7 +134,7 @@ function validate(body) {
     };
 }
 
-function runClaude({ prompt, system, model, schema, timeout }) {
+function runClaude({ prompt, system, model, schema, timeout }, signal) {
     const args = [
         '--print',
         '--output-format', 'json',
@@ -145,17 +155,40 @@ function runClaude({ prompt, system, model, schema, timeout }) {
     const cwd = mkdtempSync(join(tmpdir(), 'claude-bridge-'));
 
     return new Promise((resolve, reject) => {
-        const child = spawn(claudeBin, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+        // In its own process group, so stopping it also stops anything it started.
+        const child = spawn(claudeBin, args, { cwd, stdio: ['pipe', 'pipe', 'pipe'], detached: true });
+        const kill = (sig) => {
+            try {
+                process.kill(-child.pid, sig);
+            } catch {
+                // Already gone.
+            }
+        };
         let stdout = '';
         let stderr = '';
-        const timer = setTimeout(() => child.kill('SIGTERM'), timeout * 1000);
+        let reason = null;
+        let killTimer = null;
+        const stop = (why) => {
+            if (reason !== null || child.exitCode !== null) {
+                return;
+            }
+            reason = why;
+            kill('SIGTERM');
+            killTimer = setTimeout(() => kill('SIGKILL'), KILL_GRACE_MS);
+        };
+        const timer = setTimeout(() => stop(`Claude Code stopped after ${timeout}s`), timeout * 1000);
+        const onAbort = () => stop('The client closed the connection');
+        signal?.addEventListener('abort', onAbort, { once: true });
+        if (signal?.aborted) {
+            onAbort();
+        }
 
         child.stdout.on('data', (chunk) => (stdout += chunk));
         child.stderr.on('data', (chunk) => (stderr += chunk));
         child.on('error', (e) => finish(() => reject(new Error(`Could not start ${claudeBin}: ${e.message}`))));
-        child.on('close', (code, signal) => finish(() => {
-            if (signal) {
-                return reject(new Error(`Claude Code stopped after ${timeout}s (${signal}).`));
+        child.on('close', (code, exitSignal) => finish(() => {
+            if (exitSignal) {
+                return reject(new Error(`${reason ?? 'Claude Code stopped'} (${exitSignal}).`));
             }
 
             let result;
@@ -192,6 +225,8 @@ function runClaude({ prompt, system, model, schema, timeout }) {
             }
             finished = true;
             clearTimeout(timer);
+            clearTimeout(killTimer);
+            signal?.removeEventListener('abort', onAbort);
             rmSync(cwd, { recursive: true, force: true });
             callback();
         }
