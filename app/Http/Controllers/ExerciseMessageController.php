@@ -19,12 +19,13 @@ class ExerciseMessageController extends Controller
             'content' => ['required', 'string', 'max:5000'],
         ]);
 
+        $this->allowSlowAi();
+
         try {
             $exercises->reply($exercise, $request->string('content')->toString());
         } catch (Throwable $e) {
-            report($e);
-
-            return back()->with('error', 'De AI kon nu niet reageren. Probeer het zo opnieuw.');
+            return redirect()->to(route('exercises.show', $exercise).'#gesprek')->withInput()
+                ->with('error', $this->aiFailed($e, 'Er kwam nu geen reactie. Je bericht staat nog in het tekstvak; probeer het zo opnieuw.'));
         }
 
         return redirect()->to(route('exercises.show', $exercise).'#gesprek');

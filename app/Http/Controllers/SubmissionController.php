@@ -10,6 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -43,22 +44,24 @@ class SubmissionController extends Controller
         $code = $file instanceof UploadedFile ? (string) $file->get() : $request->string('code')->toString();
 
         if (!mb_check_encoding($code, 'UTF-8') || trim($code) === '') {
-            throw ValidationException::withMessages(['file' => 'Dit bestand bevat geen leesbare code.']);
+            throw ValidationException::withMessages($file instanceof UploadedFile
+                ? ['file' => 'Dit bestand bevat geen leesbare code.']
+                : ['code' => 'Plak hier leesbare code.']);
         }
 
         $submission = $this->user($request)->submissions()->create([
             'title' => $request->string('title')->toString(),
-            'filename' => $file instanceof UploadedFile ? $file->getClientOriginalName() : null,
+            'filename' => $file instanceof UploadedFile ? Str::limit(basename($file->getClientOriginalName()), 255, '') : null,
             'code' => $code,
         ]);
+
+        $this->allowSlowAi();
 
         try {
             $exercise = $exercises->generate($submission);
         } catch (Throwable $e) {
-            report($e);
-
             return redirect()->route('submissions.show', $submission)
-                ->with('error', 'Je code is opgeslagen, maar de AI kon nog geen vraag maken. Probeer het zo opnieuw.');
+                ->with('error', $this->aiFailed($e, 'Je code is opgeslagen, maar er is nog geen vraag. Klik op "Stel me een nieuwe vraag" om het opnieuw te proberen.'));
         }
 
         return redirect()->route('exercises.show', $exercise);

@@ -53,7 +53,7 @@
         <section class="mt-6 rounded-xl border border-stone-200 bg-white p-6">
             <div class="flex flex-wrap items-center justify-between gap-2">
                 <h2 class="text-lg font-semibold">{{ $exercise->is_correct ? 'Goed gekozen!' : 'Dit was niet de juiste variant.' }}</h2>
-                <span class="rounded-full px-3 py-1 text-sm font-medium {{ $exercise->is_correct ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">Score: {{ $exercise->score }}/10</span>
+                <span class="rounded-full px-3 py-1 text-sm font-medium {{ $exercise->is_correct ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}" title="Een inschatting van de AI">Score van de AI: {{ $exercise->score }}/10</span>
             </div>
             <h3 class="mt-4 text-sm font-medium text-stone-500">Jouw uitleg</h3>
             <p class="mt-1 whitespace-pre-line">{{ $exercise->explanation }}</p>
@@ -79,7 +79,7 @@
             <form method="POST" action="{{ route('exercises.messages.store', $exercise) }}" class="mt-4" data-ai="De AI schrijft een reactie…">
                 @csrf
                 <label for="content" class="sr-only">Jouw reactie</label>
-                <textarea id="content" name="content" rows="3" required class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2" placeholder="Typ je reactie…"></textarea>
+                <textarea id="content" name="content" rows="3" required class="w-full rounded-lg border border-stone-300 bg-white px-3 py-2" placeholder="Typ je reactie…">{{ old('content') }}</textarea>
                 <x-field-error name="content" />
                 <button type="submit" class="mt-2 rounded-lg bg-stone-900 px-4 py-2 font-medium text-white hover:bg-stone-700 disabled:cursor-wait disabled:opacity-60">Verstuur</button>
             </form>

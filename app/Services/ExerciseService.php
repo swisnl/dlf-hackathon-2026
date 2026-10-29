@@ -7,9 +7,11 @@ use App\Ai\Agents\ExerciseGenerator;
 use App\Ai\Agents\ExerciseTutor;
 use App\Enums\ExerciseMessageRole;
 use App\Enums\Variant;
+use App\Exceptions\ExerciseAlreadyAnswered;
 use App\Models\Exercise;
 use App\Models\ExerciseMessage;
 use App\Models\Submission;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Lottery;
 use RuntimeException;
 
@@ -65,7 +67,16 @@ class ExerciseService
         $exercise->score = max(0, min(10, is_numeric($score) ? (int) $score : 0));
         $exercise->feedback = $this->string($response['feedback']);
         $exercise->answered_at = now();
-        $exercise->save();
+        $exercise->updateTimestamps();
+
+        // Two tabs can both pass the "not answered yet" check during the slow AI call; only the first one may store its answer.
+        $updated = Exercise::query()->whereKey($exercise->getKey())->whereNull('answered_at')->update($exercise->getDirty());
+
+        if ($updated === 0) {
+            throw new ExerciseAlreadyAnswered();
+        }
+
+        $exercise->syncOriginal();
 
         return $exercise;
     }
@@ -75,11 +86,14 @@ class ExerciseService
      */
     public function reply(Exercise $exercise, string $content): ExerciseMessage
     {
-        $exercise->messages()->create(['role' => ExerciseMessageRole::Student, 'content' => $content]);
+        // Only store the conversation once the AI replied, so a failed call leaves no unanswered message behind.
+        $response = (new ExerciseTutor($exercise))->prompt(ExerciseTutor::studentMessage($content));
 
-        $response = (new ExerciseTutor($exercise))->prompt($content);
+        return DB::transaction(function () use ($exercise, $content, $response): ExerciseMessage {
+            $exercise->messages()->create(['role' => ExerciseMessageRole::Student, 'content' => $content]);
 
-        return $exercise->messages()->create(['role' => ExerciseMessageRole::Tutor, 'content' => trim($response->text)]);
+            return $exercise->messages()->create(['role' => ExerciseMessageRole::Tutor, 'content' => trim($response->text)]);
+        });
     }
 
     /**

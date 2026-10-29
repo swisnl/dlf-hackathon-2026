@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\Variant;
+use App\Exceptions\ExerciseAlreadyAnswered;
 use App\Models\Exercise;
 use App\Models\Submission;
 use App\Services\ExerciseService;
@@ -18,13 +19,12 @@ class ExerciseController extends Controller
     public function store(Submission $submission, ExerciseService $exercises): RedirectResponse
     {
         Gate::authorize('view', $submission);
+        $this->allowSlowAi();
 
         try {
             $exercise = $exercises->generate($submission);
         } catch (Throwable $e) {
-            report($e);
-
-            return back()->with('error', 'De AI kon geen nieuwe vraag maken. Probeer het zo opnieuw.');
+            return back()->with('error', $this->aiFailed($e, 'Er kon geen nieuwe vraag gemaakt worden. Probeer het zo opnieuw.'));
         }
 
         return redirect()->route('exercises.show', $exercise);
@@ -48,12 +48,14 @@ class ExerciseController extends Controller
             'explanation' => ['required', 'string', 'min:10', 'max:5000'],
         ]);
 
+        $this->allowSlowAi();
+
         try {
             $exercises->answer($exercise, $request->enum('choice', Variant::class) ?? Variant::A, $request->string('explanation')->toString());
+        } catch (ExerciseAlreadyAnswered) {
+            return redirect()->route('exercises.show', $exercise)->with('error', 'Deze oefening had je al beantwoord.');
         } catch (Throwable $e) {
-            report($e);
-
-            return back()->withInput()->with('error', 'De AI kon je antwoord nu niet beoordelen. Probeer het zo opnieuw.');
+            return back()->withInput()->with('error', $this->aiFailed($e, 'Je antwoord kon nu niet beoordeeld worden. Probeer het zo opnieuw.'));
         }
 
         return redirect()->route('exercises.show', $exercise);

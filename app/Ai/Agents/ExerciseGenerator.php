@@ -2,6 +2,7 @@
 
 namespace App\Ai\Agents;
 
+use App\Ai\StudentInput;
 use App\Models\Submission;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Ai\Attributes\Timeout;
@@ -30,7 +31,7 @@ class ExerciseGenerator implements Agent, HasStructuredOutput
 
     public function instructions(): Stringable|string
     {
-        return <<<'TXT'
+        return StudentInput::RULE."\n\n".<<<'TXT'
             Je bent een programmeerdocent die een student overhoort over de code die de student zelf schreef.
             De studenten hebben een laag taalniveau: schrijf in eenvoudig Nederlands (niveau B1), met korte zinnen en zo weinig mogelijk jargon.
 
@@ -60,7 +61,9 @@ class ExerciseGenerator implements Agent, HasStructuredOutput
 
     public function toPrompt(): string
     {
-        $prompt = "Bestand: {$this->submission->filename}\nTitel: {$this->submission->title}\n\nCode van de student:\n```\n{$this->submission->code}\n```";
+        $prompt = 'Titel en bestand van de student:'
+            ."\n".StudentInput::wrap('titel', "{$this->submission->title} ({$this->submission->filename})")
+            ."\n\nCode van de student:\n".StudentInput::wrap('code', $this->submission->code);
 
         if ($this->previousConcepts !== []) {
             $prompt .= "\n\nKies een ander concept dan deze eerdere oefeningen: ".implode(', ', $this->previousConcepts).'.';
