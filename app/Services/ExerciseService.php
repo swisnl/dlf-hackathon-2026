@@ -74,14 +74,20 @@ class ExerciseService
     }
 
     /**
-     * Store the student's answer as an attempt and let the AI assess the choice and explanation.
+     * Store the student's answer as an attempt and let the AI assess the clicked lines and explanation.
+     * The choice is the variant the student thinks is wrong.
+     *
+     * @param list<int> $lines the lines the student clicked in that variant
      */
-    public function answer(Exercise $exercise, User $user, Variant $choice, string $explanation): Attempt
+    public function answer(Exercise $exercise, User $user, Variant $choice, array $lines, string $explanation): Attempt
     {
+        $lines = array_values(array_unique($lines));
+        sort($lines);
+
         $attempt = new Attempt([
             'number' => 1,
             'chosen_side' => $exercise->side($choice),
-            'selected_lines' => [],
+            'selected_lines' => $lines,
             'explanation' => $explanation,
         ]);
         $attempt->exercise()->associate($exercise);

@@ -32,6 +32,10 @@ class ExerciseTest extends TestCase
                 ->where('exercise.title', $exercise->title)
                 ->where('variants.0.label', 'Variant A')
                 ->where('variants.1.label', 'Variant B')
+                // The code comes as coloured pieces per line.
+                ->has('variants.0.lines', 7)
+                ->where('variants.0.lines.0.0', ['text' => 'class', 'color' => '#1d4ed8'])
+                ->missing('variants.0.code')
                 // Before answering, the page must not know which variant is correct.
                 ->where('variants.0.correct', null)
                 ->where('variants.1.correct', null)
@@ -58,8 +62,9 @@ class ExerciseTest extends TestCase
                 ->where('exercise.submission', null));
 
         $this->actingAs($student)->post(route('exercises.answer', $exercise), [
-            'choice' => $exercise->variant(CodeSide::Correct)->value,
-            'explanation' => 'Deze variant controleert de invoer.',
+            'choice' => $exercise->variant(CodeSide::Wrong)->value,
+            'lines' => [5],
+            'explanation' => 'Deze variant controleert de invoer niet.',
         ])->assertRedirect(route('exercises.show', $exercise));
 
         $this->assertDatabaseHas('attempts', ['exercise_id' => $exercise->id, 'user_id' => $student->id]);
@@ -73,23 +78,25 @@ class ExerciseTest extends TestCase
             ->assertForbidden();
     }
 
-    public function test_a_student_can_choose_a_variant_and_explain_why(): void
+    public function test_a_student_can_click_the_wrong_lines_and_explain_why(): void
     {
         AnswerAssessor::fake([['score' => 9, 'feedback' => 'Sterke uitleg!']]);
         $exercise = $this->exercise();
         $student = $this->owner($exercise);
         $correct = $exercise->correctVariant();
+        $wrong = $correct->other();
 
         $this->actingAs($student)->post(route('exercises.answer', $exercise), [
-            'choice' => $correct->value,
+            'choice' => $wrong->value,
+            'lines' => [5, 2],
             'explanation' => 'Omdat de array in de juiste variant een beginwaarde krijgt.',
         ])->assertRedirect(route('exercises.show', $exercise));
 
         $attempt = Attempt::query()->sole();
         $this->assertTrue($attempt->user->is($student));
-        $this->assertSame(CodeSide::Correct, $attempt->chosen_side);
+        $this->assertSame(CodeSide::Wrong, $attempt->chosen_side);
         $this->assertSame(1, $attempt->number);
-        $this->assertSame([], $attempt->selected_lines);
+        $this->assertSame([2, 5], $attempt->selected_lines);
         $this->assertSame(3, $attempt->stars);
         $this->assertSame('Omdat de array in de juiste variant een beginwaarde krijgt.', $attempt->explanation);
         $this->assertSame('Sterke uitleg!', $attempt->feedback);
@@ -99,7 +106,8 @@ class ExerciseTest extends TestCase
         $this->assertSame(3, $progress->best_stars);
         $this->assertSame(3, $student->refresh()->stars);
 
-        AnswerAssessor::assertPrompted(fn ($prompt) => $prompt->contains("Keuze van de student: {$correct->label()}")
+        AnswerAssessor::assertPrompted(fn ($prompt) => $prompt->contains("Variant met fouten volgens de student: {$wrong->label()}")
+            && $prompt->contains('Regels die de student aanklikte als fout: 2, 5')
             && $prompt->contains("Juiste variant: {$correct->label()}")
             && $prompt->contains('Omdat de array in de juiste variant een beginwaarde krijgt.'));
 
@@ -107,7 +115,8 @@ class ExerciseTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('Exercises/Show')
                 ->where('attempt.correct', true)
-                ->where('attempt.chosen', $correct->value)
+                ->where('attempt.chosen', $wrong->value)
+                ->where('attempt.lines', [2, 5])
                 ->where('attempt.stars', 3)
                 ->where('attempt.feedback', 'Sterke uitleg!')
                 ->where('attempt.errors.0.explanation', $exercise->errors->firstOrFail()->explanation)
@@ -122,6 +131,7 @@ class ExerciseTest extends TestCase
 
         $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
             'choice' => $exercise->correctVariant()->other()->value,
+            'lines' => [5],
             'explanation' => $injection,
         ]);
 
@@ -135,17 +145,18 @@ class ExerciseTest extends TestCase
         $this->assertSame($injection, $attempt->explanation);
     }
 
-    public function test_a_wrong_choice_is_stored_as_the_wrong_side(): void
+    public function test_lines_clicked_in_the_correct_variant_are_a_wrong_answer(): void
     {
         AnswerAssessor::fake([['score' => 3, 'feedback' => 'Kijk nog eens.']]);
         $exercise = $this->exercise();
 
         $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
-            'choice' => $exercise->correctVariant()->other()->value,
+            'choice' => $exercise->correctVariant()->value,
+            'lines' => [5],
             'explanation' => 'Ik denk dat deze korter en dus beter is.',
         ]);
 
-        $this->assertSame(CodeSide::Wrong, Attempt::query()->sole()->chosen_side);
+        $this->assertSame(CodeSide::Correct, Attempt::query()->sole()->chosen_side);
 
         $this->actingAs($this->owner($exercise))->get(route('exercises.show', $exercise))
             ->assertInertia(fn (Assert $page) => $page->where('attempt.correct', false));
@@ -160,6 +171,7 @@ class ExerciseTest extends TestCase
         foreach ([$first, $second] as $exercise) {
             $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
                 'choice' => 'a',
+                'lines' => [5],
                 'explanation' => 'Omdat dit de juiste variant is.',
             ]);
         }
@@ -179,15 +191,23 @@ class ExerciseTest extends TestCase
         $this->assertCount(2, $exercises->map(fn (Exercise $exercise) => $exercise->correctVariant())->unique());
     }
 
-    public function test_a_choice_and_an_explanation_are_required(): void
+    public function test_a_choice_clicked_lines_and_an_explanation_are_required(): void
     {
         AnswerAssessor::fake();
         $exercise = $this->exercise();
 
         $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
             'choice' => 'c',
+            'lines' => [],
             'explanation' => 'kort',
-        ])->assertSessionHasErrors(['choice', 'explanation']);
+        ])->assertSessionHasErrors(['choice', 'lines', 'explanation']);
+
+        // The factory code has 7 lines.
+        $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
+            'choice' => 'a',
+            'lines' => [0, 8, 3, 3],
+            'explanation' => 'Omdat dit de foute variant is.',
+        ])->assertSessionHasErrors(['lines.0', 'lines.1', 'lines.2', 'lines.3']);
 
         $this->assertDatabaseEmpty('attempts');
         AnswerAssessor::assertNeverPrompted();
@@ -201,6 +221,7 @@ class ExerciseTest extends TestCase
 
         $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
             'choice' => 'b',
+            'lines' => [5],
             'explanation' => 'Toch een andere keuze maken.',
         ])->assertForbidden();
 
@@ -214,6 +235,7 @@ class ExerciseTest extends TestCase
 
         $this->actingAs(User::factory()->create())->post(route('exercises.answer', $exercise), [
             'choice' => 'a',
+            'lines' => [5],
             'explanation' => 'Omdat dit de juiste variant is.',
         ])->assertNotFound();
 
@@ -232,6 +254,7 @@ class ExerciseTest extends TestCase
 
         $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
             'choice' => 'b',
+            'lines' => [5],
             'explanation' => 'Antwoord uit de tweede tab.',
         ])->assertRedirect(route('exercises.show', $exercise))->assertSessionHas('error');
 
@@ -247,6 +270,7 @@ class ExerciseTest extends TestCase
 
         $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
             'choice' => 'a',
+            'lines' => [5],
             'explanation' => 'Omdat dit de juiste variant is.',
         ])->assertSessionHas('error', fn (string $error) => str_starts_with($error, 'De AI deed er te lang over'))
             ->assertSessionHasInput('explanation');
@@ -261,6 +285,7 @@ class ExerciseTest extends TestCase
 
         $this->actingAs($this->owner($exercise))->post(route('exercises.answer', $exercise), [
             'choice' => 'a',
+            'lines' => [5],
             'explanation' => 'Omdat dit de juiste variant is.',
         ])->assertSessionHas('error');
 
@@ -382,8 +407,8 @@ class ExerciseTest extends TestCase
     private function answer(Exercise $exercise, array $attributes = []): Attempt
     {
         return Attempt::factory()->for($exercise)->for($this->owner($exercise))->create([
-            'chosen_side' => CodeSide::Correct,
-            'selected_lines' => [],
+            'chosen_side' => CodeSide::Wrong,
+            'selected_lines' => [5],
             'explanation' => 'Mijn uitleg',
             'feedback' => 'Goed gedaan.',
             ...$attributes,

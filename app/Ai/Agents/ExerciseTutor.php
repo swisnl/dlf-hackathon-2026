@@ -37,6 +37,7 @@ class ExerciseTutor implements Agent, Conversational
         $variantB = StudentInput::wrap('variant_b', $exercise->code(Variant::B));
         $explanation = StudentInput::wrap('uitleg', $attempt->explanation);
         $chosen = $attempt->chosen_side !== null ? $exercise->variant($attempt->chosen_side)->label() : '';
+        $lines = implode(', ', $attempt->selected_lines);
 
         return <<<TXT
             {$rule}
@@ -59,7 +60,8 @@ class ExerciseTutor implements Agent, Conversational
 
             Juiste variant: {$exercise->correctVariant()->label()}
             Uitleg van de docent: {$exercise->referenceExplanation()}
-            Keuze van de student: {$chosen}
+            Variant met fouten volgens de student: {$chosen}
+            Regels die de student aanklikte als fout: {$lines}
             Uitleg van de student:
             {$explanation}
             Jouw eerdere feedback ({$attempt->stars} van {$exercise->stars} sterren): {$attempt->feedback}

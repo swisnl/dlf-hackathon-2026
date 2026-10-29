@@ -27,8 +27,9 @@ class AnswerAssessor implements Agent, HasStructuredOutput
     public function instructions(): Stringable|string
     {
         return StudentInput::RULE."\n\n".<<<'TXT'
-            Je bent een vriendelijke programmeerdocent. Een student koos bij een oefening een variant en legde uit waarom.
+            Je bent een vriendelijke programmeerdocent. Een student wees bij een oefening de variant met fouten aan, klikte daarin de foute regels aan en legde uit waarom.
             Beoordeel vooral de uitleg: begrijpt de student het concept? Een goede keuze met een slechte uitleg is maar half goed.
+            Vergelijk de aangeklikte regels met de foute regels uit de uitleg van de docent: een gemiste fout of een onterecht aangeklikte regel telt mee.
             Een foute keuze met een uitleg die laat zien dat de student nadenkt, verdient ook waardering.
 
             Schrijf de feedback direct aan de student (je/jij), in eenvoudig Nederlands (niveau B1), in maximaal 5 korte zinnen. Gebruik geen markdown: geen backticks, sterretjes of kopjes.
@@ -64,10 +65,16 @@ class AnswerAssessor implements Agent, HasStructuredOutput
             Juiste variant: {$exercise->correctVariant()->label()}
             Uitleg van de docent: {$exercise->referenceExplanation()}
 
-            Keuze van de student: {$chosen}
+            Variant met fouten volgens de student: {$chosen}
+            Regels die de student aanklikte als fout: {$this->selectedLines()}
             Uitleg van de student:
             {$this->wrap('uitleg', $this->attempt->explanation)}
             TXT;
+    }
+
+    private function selectedLines(): string
+    {
+        return implode(', ', $this->attempt->selected_lines);
     }
 
     private function wrap(string $tag, ?string $text): string
