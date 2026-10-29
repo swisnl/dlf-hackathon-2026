@@ -6,6 +6,7 @@ use App\Enums\CodeSide;
 use App\Enums\ProgressStatus;
 use App\Enums\Variant;
 use App\Exceptions\ExerciseAlreadyAnswered;
+use App\Http\Requests\ExerciseAnswerRequest;
 use App\Http\Resources\StudentExerciseResource;
 use App\Models\Exercise;
 use App\Models\Submission;
@@ -15,7 +16,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Throwable;
@@ -103,19 +103,12 @@ class ExerciseController extends Controller
         ]);
     }
 
-    public function answer(Request $request, Exercise $exercise, ExerciseService $exercises): RedirectResponse
+    public function answer(ExerciseAnswerRequest $request, Exercise $exercise, ExerciseService $exercises): RedirectResponse
     {
-        Gate::authorize('answer', $exercise);
-
-        $request->validate([
-            'choice' => ['required', Rule::enum(Variant::class)],
-            'explanation' => ['required', 'string', 'min:10', 'max:5000'],
-        ]);
-
         $this->allowSlowAi();
 
         try {
-            $exercises->answer($exercise, $this->user($request), $request->enum('choice', Variant::class) ?? Variant::A, $request->string('explanation')->toString());
+            $exercises->answer($exercise, $this->user($request), $request->choice(), $request->explanation());
         } catch (ExerciseAlreadyAnswered) {
             return redirect()->route('exercises.show', $exercise)->with('error', 'Deze oefening had je al beantwoord.');
         } catch (Throwable $e) {
